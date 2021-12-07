@@ -18,6 +18,7 @@ usage
 ```js
 const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
+// webpack.config.js
 module.exports = {
   plugins: [
     new BundleAnalyzerPlugin()
