@@ -27,10 +27,10 @@ module.exports = {
 
 // vue.config.js
 module.exports = {
-	configureWebpack: {
-		plugins: [
-			new BundleAnalyzerPlugin()
-		]
-	}
+  configureWebpack: {
+    plugins: [
+      new BundleAnalyzerPlugin()
+    ]
+  }
 }
 ```
