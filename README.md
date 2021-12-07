@@ -2,6 +2,7 @@
 
 - [webpack](#webpack)
 	* [webpack-bundle-analyzer](#webpack-bundle-analyzer)
+	* [add-asset-html-webpack-plugin](#add-asset-html-webpack-plugin)
 
 ### webpack
 #### webpack-bundle-analyzer
@@ -34,3 +35,5 @@ module.exports = {
   }
 }
 ```
+
+#### add-asset-html-webpack-plugin
