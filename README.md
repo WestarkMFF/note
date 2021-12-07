@@ -1,5 +1,9 @@
 #  ☄️ FE notebook
 
+- JS
+  * 判断多个 `简单数据类型` 相等
+  * 操作 `url` 参数
+
 - [webpack](#webpack)
 	* [plugin: webpack-bundle-analyzer](#webpack-bundle-analyzer)
 	* [plugin: add-asset-html-webpack-plugin](#add-asset-html-webpack-plugin)
