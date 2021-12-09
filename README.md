@@ -8,10 +8,8 @@
 	* [plugin: webpack-bundle-analyzer](#webpack-bundle-analyzer)
 	* [plugin: add-asset-html-webpack-plugin](#add-asset-html-webpack-plugin)
 
-- [☄️ FE notebook](#️-fe-notebook)
-	- [webpack](#webpack)
-	- [git](#git)
-		- [gitignore](#gitignore)
+- [git](#git)
+	* [gitignore](#gitignore)
 
 ## webpack
 <h3 id='webpack-bundle-analyzer'>webpack-bundle-analyzer</h3>
