@@ -50,3 +50,12 @@ install
 ```shell
 yarn add add-asset-html-webpack-plugin -D
 ```
+
+
+useage
+
+```js
+
+const AddAssetHtmlPlugin = require('add-asset-html-webpack-plugin');
+
+```
