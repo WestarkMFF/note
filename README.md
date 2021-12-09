@@ -58,4 +58,9 @@ useage
 
 const AddAssetHtmlPlugin = require('add-asset-html-webpack-plugin');
 
+
+
+    new AddAssetHtmlPlugin({
+        filepath: path.resolve(__dirname, './build/*.dll.js'),
+      })
 ```
