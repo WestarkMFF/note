@@ -8,6 +8,11 @@
 	* [plugin: webpack-bundle-analyzer](#webpack-bundle-analyzer)
 	* [plugin: add-asset-html-webpack-plugin](#add-asset-html-webpack-plugin)
 
+- [☄️ FE notebook](#️-fe-notebook)
+	- [webpack](#webpack)
+	- [git](#git)
+		- [gitignore](#gitignore)
+
 ## webpack
 <h3 id='webpack-bundle-analyzer'>webpack-bundle-analyzer</h3>
 
@@ -63,4 +68,15 @@ const AddAssetHtmlPlugin = require('add-asset-html-webpack-plugin');
     new AddAssetHtmlPlugin({
         filepath: path.resolve(__dirname, './build/*.dll.js'),
       })
+```
+
+
+## git
+### gitignore
+`.gitignore`文件是用来防止本地文件被上传到 git 上，文件位置和 .git📁 同一层级
+
+```shell
+node_modules/*
+.vscode/*
+
 ```
