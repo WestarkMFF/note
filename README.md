@@ -1,7 +1,7 @@
 #  ☄️ FE notebook
 
 - JS
-  * 判断多个 `简单数据类型` 相等
+  * [判断多个 `简单数据类型` 相等](https://github.com/WestarkMFF/note/blob/main/playground/js/multipleSimpleDataEqual.js)
   * 操作 `url` 参数
 
 - [webpack](#webpack)
