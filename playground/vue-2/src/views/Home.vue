@@ -14,5 +14,18 @@ export default {
   components: {
     HelloWorld,
   },
+
+  created(){
+	  this.$router.push('table')
+  }
 }
 </script>
+
+<style lang='less'>
+.v-modal{
+	z-index: -3 !important;
+}
+.el-message-box__wrapper{
+	z-index: -1 !important;
+}
+</style>

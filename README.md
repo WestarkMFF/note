@@ -11,6 +11,9 @@
 - [git](#git)
 	* [gitignore](#gitignore)
 
+- [html](#html)
+	* [link 标签](#tag_link)
+
 ## webpack
 <h3 id='webpack-bundle-analyzer'>webpack-bundle-analyzer</h3>
 
@@ -55,8 +58,7 @@ yarn add add-asset-html-webpack-plugin -D
 ```
 
 
-useage
-
+usage
 ```js
 
 const AddAssetHtmlPlugin = require('add-asset-html-webpack-plugin');
@@ -76,3 +78,8 @@ node_modules/*
 .vscode/*
 
 ```
+## html
+### 什么是 `html` 标签？
+标签规定了**元素**
+<h3 id='tag_link'>link 标签</h3>
+`link` 标签是**HTML外部资源链接元素**，`link`标签最常用于链接`css`
