@@ -15,9 +15,6 @@ export default {
     HelloWorld,
   },
 
-  created(){
-	  this.$router.push('table')
-  }
 }
 </script>
 

@@ -7,7 +7,7 @@ const webpack = require("webpack")
 module.exports = {
   configureWebpack: {
     plugins: [
-      //   new BundleAnalyzerPlugin(),
+      //   new BundleAnalyzerPlugin(), // webpack 📦分析
       new webpack.DllReferencePlugin({
         manifest: require("./dll/manifest.json"),
       }),

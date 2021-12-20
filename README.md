@@ -1,4 +1,4 @@
-#  ☄️ FE notebook
+#  ☄️ FE notebook for learn and quickLook
 
 - JS
   * [判断多个 `简单数据类型` 相等](https://github.com/WestarkMFF/note/blob/main/playground/js/multipleSimpleDataEqual.js)
@@ -80,6 +80,26 @@ node_modules/*
 ```
 ## html
 ### 什么是 `html` 标签？
-标签规定了**元素**
+标签规定了**元素**，是构成 web 世界的一砖一瓦
 <h3 id='tag_link'>link 标签</h3>
 `link` 标签是**HTML外部资源链接元素**，`link`标签最常用于链接`css`
+
+## vue-cli
+### 什么是 `vue-cli`？
+`vue-cli` 本质上是一个为 vue 定制的、基于 webpack 封装的一个cli。
+提供了开箱即用的 css 编译器、typescript、eslint、单元测试...
+
+<h3 id='vueCli_inspect'>vue cli inspect</h3>
+`inspect` 参数可以输出当前使用的 webpack 配置
+
+> 该命令会将解析出来的 webpack 配置、包括链式访问规则和插件的提示打印到 stdout。
+usage
+
+```shell
+npx vue-cli-service inspect
+# or
+vue inspect
+
+# 输出到文件方便查看
+vue inspect > output.js
+```
