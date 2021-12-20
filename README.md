@@ -14,6 +14,9 @@
 - [html](#html)
 	* [link 标签](#tag_link)
 
+- [vue-cli](#vue-cli)
+    * [vue cli inspect](#vueCli_inspect)
+
 ## webpack
 <h3 id='webpack-bundle-analyzer'>webpack-bundle-analyzer</h3>
 
@@ -77,6 +80,9 @@ new AddAssetHtmlPlugin({
 node_modules/*
 .vscode/*
 
+# **/xxx 用来表示任意层级的 xxx 文件夹
+**/node_modules/*
+
 ```
 ## html
 ### 什么是 `html` 标签？
@@ -93,8 +99,8 @@ node_modules/*
 `inspect` 参数可以输出当前使用的 webpack 配置
 
 > 该命令会将解析出来的 webpack 配置、包括链式访问规则和插件的提示打印到 stdout。
-usage
 
+usage
 ```shell
 npx vue-cli-service inspect
 # or
