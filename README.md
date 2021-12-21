@@ -17,6 +17,9 @@
 - [vue-cli](#vue-cli)
     * [vue cli inspect](#vueCli_inspect)
 
+- [vite](#vite)
+    * [vite.config.js](#viteConfigJs)
+
 ## webpack
 <h3 id='webpack-bundle-analyzer'>webpack-bundle-analyzer</h3>
 
@@ -109,3 +112,7 @@ vue inspect
 # 输出到文件方便查看
 vue inspect > output.js
 ```
+
+
+## vite
+<h3 id='viteConfigJs'>vite.config.js</h3>
