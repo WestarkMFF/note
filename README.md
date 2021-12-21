@@ -116,3 +116,4 @@ vue inspect > output.js
 
 ## vite
 <h3 id='viteConfigJs'>vite.config.js</h3>
+[vite官网](https://cn.vitejs.dev/config/#assetsinclude)
