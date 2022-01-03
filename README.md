@@ -20,6 +20,9 @@
 - [vite](#vite)
     * [vite.config.js](#viteConfigJs)
 
+- [vue](#vue)
+    * [vue3 使用 vue-router](#vue3vueRouter)
+
 ## webpack
 <h3 id='webpack-bundle-analyzer'>webpack-bundle-analyzer</h3>
 
@@ -117,3 +120,35 @@ vue inspect > output.js
 ## vite
 <h3 id='viteConfigJs'>vite.config.js</h3>
 [vite官网](https://cn.vitejs.dev/config/#assetsinclude)
+
+
+## vue
+
+<h3 id='vue3vueRouter'>vue3 使用 vue-router</h3>
+
+```js
+import { createRouter, createWebHashHistory } from "vue-router"
+
+const routes = [
+  {
+    path: "/index",
+    name: "index",
+    component: () => import("../components/HelloWorld.vue"),
+  },
+]
+
+const router = createRouter({
+  history: createWebHashHistory(),
+  routes,
+})
+
+export default router
+
+
+/**
+ * main.js
+ * 
+ * const app = createApp(App)
+ * app.use(router)
+ */
+ ```
