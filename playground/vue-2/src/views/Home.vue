@@ -15,14 +15,17 @@ export default {
     HelloWorld,
   },
 
+  created() {
+    this.$router.push({ name: "table" })
+  },
 }
 </script>
 
-<style lang='less'>
-.v-modal{
-	z-index: -3 !important;
+<style lang="less">
+.v-modal {
+  z-index: -3 !important;
 }
-.el-message-box__wrapper{
-	z-index: -1 !important;
+.el-message-box__wrapper {
+  z-index: -1 !important;
 }
 </style>

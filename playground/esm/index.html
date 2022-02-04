@@ -1,0 +1,14 @@
+<html>
+  <body>
+    <script type="module">
+      // 可以通过 import() 函数，传入一个模块路径作为参数，返回一个包含 ESM export 对象的 Promise
+      //   import square from "./test.js"
+      let a = 2
+      //   console.log("square(a):", square(a))
+
+      import("./test.js").then((exp) => {
+        console.log("exp.default(a):", exp.default(a))
+      })
+    </script>
+  </body>
+</html>

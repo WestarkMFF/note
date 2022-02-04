@@ -1,3 +1,7 @@
+import test from './ModuleA'
+
+console.log(test.fuck)
+
 /**
  * 判断多个简单数据类型相等
  */
