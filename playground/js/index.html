@@ -1,25 +1,50 @@
 <html>
   <body>
+    <!-- <script src="./proxy.js"></script> -->
+
     <script>
-      function test() {
-        let a = [1, 2, 3]
-        console.log(a)
-        for (let i = 0; i <= a.length; i++) {
-          let result = a[i]
+      const createCalc = (function () {
+        let val = 0
 
-		  if(result == 1){
-			  return
-		  }
-
-          console.log(result)
-
+        function add() {
+          val++
+          this.val = val
         }
-        console.log("duck")
 
-        return
-      }
+        function minus() {
+          val--
+          this.val = val
+        }
+
+        return {
+          val,
+          add,
+          minus,
+        }
+      })()
+
+      const calc = createCalc
+      calc.add()
+      calc.add()
+      calc.add()
+      calc.add()
+      calc.minus()
+      calc.minus()
+      calc.minus()
+      calc.minus()
+      calc.minus()
+      calc.minus()
+      console.log(calc.val)
+
+      const calc_2 = createCalc
+
+      console.log(calc_2.val)
 
       test()
+      function test() {
+        console.log("test", test)
+        g
+      }
     </script>
   </body>
 </html>

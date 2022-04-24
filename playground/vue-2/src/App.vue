@@ -1,10 +1,23 @@
 <template>
   <div id="app">
-    <div id="nav"><router-link to="/">Home</router-link> | <router-link to="/about">About</router-link> | <router-link to="/table">Table</router-link> |</div>
+    <div id="nav">
+      <router-link to="/">Home</router-link> | <router-link to="/about">About</router-link> |
+      <router-link to="/table">Table</router-link> | <router-link to="/slot">Slot</router-link> |
+      <router-link to="/slotTest">SlotTest</router-link> |
+      <router-link to="/slotJsx">SlotJsx</router-link> |
+      <router-link to="/ali">ali</router-link>
+    </div>
     <router-view />
   </div>
 </template>
 
+<script>
+export default {
+  created() {
+    this.$router.push({ name: "ali" })
+  },
+}
+</script>
 <style lang="less">
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;

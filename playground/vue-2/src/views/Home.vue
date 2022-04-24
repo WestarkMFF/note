@@ -14,10 +14,6 @@ export default {
   components: {
     HelloWorld,
   },
-
-  created() {
-    this.$router.push({ name: "table" })
-  },
 }
 </script>
 

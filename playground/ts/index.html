@@ -1,0 +1,34 @@
+<html>
+  <body>
+    <!-- <script src="./dist/index.js"></script> -->
+
+    <script>
+      //   const obj = {
+      //     tag: "div",
+      //     children: "hello world",
+      //   }
+
+      //   Render(obj, document.body)
+
+      function getUrlParams(queryKey = undefined) {
+        const result = {},
+          href = location.href
+
+        if (!href.includes("?")) return {}
+        const paramsArr = href.split("?")[1].split("&")
+        paramsArr.forEach((item) => {
+          const key = item.split("=")[0]
+          let value = item.split("=")[1]
+          if (["true", "false"].includes(value)) value = JSON.parse(value)
+          if (value.startsWith("[") && value.endsWith("]")) {
+            value = JSON.parse(decodeURI(value))
+          }
+          result[key] = value
+        })
+        return typeof queryKey === "undefined" ? result : result[queryKey]
+      }
+      const p = getUrlParams()
+      console.log(p)
+    </script>
+  </body>
+</html>
