@@ -1,0 +1,115 @@
+<html>
+  <script src="../packages/vue/dist/vue.global.js"></script>
+  <body>
+    <div id="app">
+      msg: {{ msg }} arr:
+      <button @click="onPushArr">push</button>
+
+      <ul>
+        <li v-for="item in arr">{{item}}</li>
+      </ul>
+    </div>
+
+    <script>
+      const render = Vue.h
+      const app = Vue.createApp({
+        data() {
+          return {
+            msg: 'duck'
+          }
+        },
+
+        props: ['raw'],
+
+        setup() {
+          const msg = Vue.ref('duck')
+
+          console.log('msg', msg)
+
+          const arr = Vue.ref([1, 2, 3, 4])
+          // const
+          function onPushArr() {
+            arr.value.push(arr.value.length + 1)
+          }
+          return { msg, arr, onPushArr }
+
+          /**
+			 * setup 可以 return 一个函数，函数再 return 一个 render
+			 *
+			 *
+			 *  return () => {
+								return render('div', {}, 'shit')
+						}
+			*/
+        },
+        fuck: true
+      })
+
+      console.log('#app', app)
+
+      const app_2 = Vue.createApp({
+        data() {
+          return {
+            fuck: true
+          }
+        }
+      })
+
+      app.mount('#app')
+
+      const patchProps = () => {}
+
+      const target = Object.assign({ patchProps })
+
+      console.log('target', target)
+    </script>
+
+    <script>
+      // proxy
+
+      const obj = { name: 'westark', arr: [22, 33, 44], detail: { gender: 1 } }
+
+      function proxyData(value) {
+        const proxy = new Proxy(value, {
+          get(target, key) {
+            console.log('target:', target)
+            console.log('key:', key)
+            return target[key]
+          },
+          set(target, key, value) {
+            console.log('set trigger')
+            target[key] = value
+          }
+        })
+
+        return proxy
+      }
+
+      const p = proxyData(obj)
+    </script>
+
+    <script>
+      const rawFunction = `const _Vue = Vue
+
+return function render(_ctx, _cache) {
+  with (_ctx) {
+    const { toDisplayString: _toDisplayString } = _Vue
+
+    return "msg: " + _toDisplayString(msg)
+  }
+}`
+
+      const testFunction = `
+return function(){
+
+	return 'abc'
+}
+`
+
+      //   const result = new Function(rawFunction)()
+      const result = new Function(testFunction)
+
+      console.log(result)
+    </script>
+  </body>
+</html>
