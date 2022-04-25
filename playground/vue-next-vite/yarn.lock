@@ -1016,6 +1016,11 @@ function-bind@^1.1.1:
   resolved "https://registry.npmmirror.com/function-bind/download/function-bind-1.1.1.tgz#a56899d3ea3c9bab874bb9773b7c5ede92f4895d"
   integrity sha1-pWiZ0+o8m6uHS7l3O3xe3pL0iV0=
 
+fuse.js@^6.5.3:
+  version "6.5.3"
+  resolved "https://mirrors.tencent.com/npm/fuse.js/-/fuse.js-6.5.3.tgz#7446c0acbc4ab0ab36fa602e97499bdb69452b93"
+  integrity sha512-sA5etGE7yD/pOqivZRBvUBd/NaL2sjAu6QuSaFoe1H2BrJSkH/T/UXAJ8CdXdw7DvY3Hs8CXKYkDWX7RiP5KOg==
+
 gensync@^1.0.0-beta.2:
   version "1.0.0-beta.2"
   resolved "https://mirrors.tencent.com/npm/gensync/-/gensync-1.0.0-beta.2.tgz#32a6ee76c3d7f52d46b2b1ae5d93fea8580a25e0"

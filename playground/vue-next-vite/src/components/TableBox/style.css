@@ -1,0 +1,12 @@
+.tableBox {
+}
+
+.tableBox-plugins {
+  margin-bottom: 8px;
+}
+
+.tableBox-plugins .tableBox-pluginWrapper .plugin_bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
