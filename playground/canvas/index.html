@@ -1,36 +1,38 @@
-<!DOCTYPE html>
 <html>
+  <head>
+    <title>three.js experiment</title>
 
-<head>
-	<meta charset=utf-8>
-	<meta name=viewport content="width=device-width,initial-scale=1">
-	<link href=https://res.weixin.oa.com/favicon.ico rel=icon type=image/x-icon>
-	<link href=https://res.weixin.oa.com/favicon.ico rel="shortcut icon" type=image/x-icon>
-	<title>压测任务列表</title>
-	<link href=/wego/wecapacityweb/static/release/css/chunk-vendors.b8830a0b.css rel=preload as=style
-		crossorigin=use-credentials>
-	<link href=/wego/wecapacityweb/static/release/css/pressures.244aabe5.css rel=preload as=style
-		crossorigin=use-credentials>
-	<link href=/wego/wecapacityweb/static/release/js/chunk-vendors.6f8a73c1.js rel=modulepreload as=script
-		crossorigin=use-credentials>
-	<link href=/wego/wecapacityweb/static/release/js/pressures.38d37437.js rel=modulepreload as=script
-		crossorigin=use-credentials>
-	<link href=/wego/wecapacityweb/static/release/css/chunk-vendors.b8830a0b.css rel=stylesheet
-		crossorigin=use-credentials>
-	<link href=/wego/wecapacityweb/static/release/css/pressures.244aabe5.css rel=stylesheet crossorigin=use-credentials>
-</head>
+    <style>
+      body {
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="./lib/three.js"></script>
 
-<body>
-	<div id=app></div>
-	<script type=module src=/wego/wecapacityweb/static/release/js/chunk-vendors.6f8a73c1.js
-		crossorigin=use-credentials></script>
-	<script type=module src=/wego/wecapacityweb/static/release/js/pressures.38d37437.js
-		crossorigin=use-credentials></script>
-	<script>!function () { var e = document, t = e.createElement("script"); if (!("noModule" in t) && "onbeforeload" in t) { var n = !1; e.addEventListener("beforeload", function (e) { if (e.target === t) n = !0; else if (!e.target.hasAttribute("nomodule") || !n) return; e.preventDefault() }, !0), t.type = "module", t.src = ".", e.head.appendChild(t), t.remove() } }();</script>
-	<script src=/wego/wecapacityweb/static/release/js/chunk-vendors-legacy.33b39b2e.js crossorigin=use-credentials
-		nomodule></script>
-	<script src=/wego/wecapacityweb/static/release/js/pressures-legacy.0dba625e.js crossorigin=use-credentials
-		nomodule></script>
-</body>
+    <script>
+      // 1. scene, 2. camera, 3. renderer, so that we can render the scene with camera
+      const scene = new THREE.Scene()
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
+      const renderer = new THREE.WebGLRenderer()
 
+      renderer.setClearColor(new THREE.Color("red"))
+      renderer.setSize(window.innerWidth, window.innerHeight)
+
+      const axes = new THREE.AxesHelper(20)
+      scene.add(axes)
+
+      const planeGeometry = new THREE.PlaneGeometry(60, 20)
+      const planeMaterial = new THREE.MeshBasicMaterial({ color: "blue" })
+      const plane = new THREE.Mesh(planeGeometry, planeMaterial)
+
+      plane.rotation.x = -0.5 * Math.PI
+      plane.position.set(15, 0, 0)
+
+      scene.add(plane)
+
+      console.log("scene:", scene)
+    </script>
+  </body>
 </html>

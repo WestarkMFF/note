@@ -1,0 +1,97 @@
+<html>
+  <body>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        padding: 0 12px;
+      }
+    </style>
+
+    <div id="app">
+      <svg v-bind="svgBasic">
+        <rect fill="lightSkyBlue" height="100%" width="100%"></rect>
+
+        <polygon
+          id="p"
+          fill="blueViolet"
+          stroke="navy"
+          points="20,180 20,20 180,20 180,180 60,60 140,60"
+        ></polygon>
+        <use xlink:href="#p" x="50%" fill-rule="evenodd"></use>
+      </svg>
+
+      <br />
+
+      <svg v-bind="svgBasic">
+        <rect fill="lightSkyBlue" height="100%" width="100%"></rect>
+
+        <polygon
+          id="p"
+          fill="blueViolet"
+          stroke="navy"
+          points="20,180 20,20 180,20 180,180 60,60 140,60"
+        ></polygon>
+        <use xlink:href="#p" x="50%" fill-rule="evenodd"></use>
+      </svg>
+
+      <br />
+
+      <svg v-bind="svgBasic">
+        <rect fill="navy" height="100%" width="100%"></rect>
+        <text
+          font-size="80"
+          fill="mediumBlue"
+          stroke="gold"
+          stroke-width="7"
+          paint-order="stroke"
+          x="50%"
+          y="70"
+          text-anchor="middle"
+        >
+          outlined
+        </text>
+      </svg>
+
+      <br />
+
+      <svg width="100px" height="100px" version="1.1" xmlns="http://www.w3.org/2000/svg">
+        <!-- <path d="M10 10 H90 V90 H30 z" /> -->
+        <!-- <path d="M40 0 L80 40 h-80"></path> -->
+
+        <!-- <path d="M10 10 h80 v80 h-80 z"></path> -->
+
+        <path d="M10 10 C 20 20, 40 20, 50 10" stroke="black" fill="transparent" />
+
+        <!-- Points -->
+        <circle cx="10" cy="10" r="2" fill="red" />
+        <circle cx="90" cy="90" r="2" fill="red" />
+        <circle cx="90" cy="10" r="2" fill="red" />
+        <circle cx="10" cy="90" r="2" fill="red" />
+      </svg>
+    </div>
+
+    <script type="module">
+      import { createApp } from "https://lib.baomitu.com/vue/3.2.31/vue.esm-browser.js"
+      import { SVG } from "https://lib.baomitu.com/svg.js/3.1.2/svg.esm.js"
+
+      const app = createApp({
+        setup() {
+          const svgBasic = {
+            width: "4in",
+            height: "2in",
+            style: {
+              "margin-top": "12px",
+            },
+          }
+
+          return { svgBasic }
+        },
+      })
+
+      app.mount("#app")
+    </script>
+  </body>
+</html>

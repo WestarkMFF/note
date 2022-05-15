@@ -17,6 +17,7 @@
 import { ref } from "vue";
 import TableBox from "./TableBox/index.vue";
 import jsonData from "../assets/data.json";
+import Fuse from "fuse.js";
 
 const props = defineProps<{
   msg: string;
@@ -25,12 +26,21 @@ const props = defineProps<{
 
 const filterKey = ref<string>("");
 
+const fuse = new Fuse(jsonData, {
+  keys: ["email"],
+  ignoreLocation: true,
+  findAllMatches: true,
+});
+
+console.log(fuse.search("goldie91"));
+
 TableBox.instance("testTable").then((res: any) => {
   // console.log(res);
   res.init({
     data: jsonData,
     columns: [
       "id, id",
+      "username, username",
       "email, email",
       "createdAt, createdAt",
       "updatedAt, updatedAt",
