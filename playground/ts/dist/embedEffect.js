@@ -2,8 +2,24 @@
 /**
  * effect
  */
+/**
+ * 封装 hasOwnProperty 函数
+ * @param obj
+ * @param key
+ * @returns boolean
+ */
+function hasOwn(obj, key) {
+    if (typeof obj != "object" || obj == null)
+        return false;
+    return Object.prototype.hasOwnProperty.call(obj, key);
+}
 var activeEffect; // 当前激活的副作用函数 (effectFn)
 var effectStack = [];
+var TriggerType;
+(function (TriggerType) {
+    TriggerType["SET"] = "SET";
+    TriggerType["ADD"] = "ADD";
+})(TriggerType || (TriggerType = {}));
 function effect(fn, options) {
     if (!options)
         options = {};
@@ -50,6 +66,45 @@ var obj = new Proxy(data, {
         return res;
     },
     set: function (target, key, val, receiver) {
+        console.log("触发 set", key, val);
+        // 如果已经有 xx 属性就是 set, 否则是添加新属性
+        var type = hasOwn(target, key) ? "SET" : "ADD";
+        // 设置属性值
+        var res = Reflect.set(target, key, val, receiver);
+        trigger(target, key, type);
+        return res;
+    },
+    /**
+     * 拦截删除操作
+     *
+     * exg: delete obj.foo
+     */
+    deleteProperty: function (target, key) {
+        var hadKey = hasOwn(target, key);
+        var res = Reflect.deleteProperty(target, key);
+        if (res && hadKey) {
+            trigger(target, key, "DELETE");
+        }
+        return res;
+    },
+});
+var obj_1 = new Proxy(data, {
+    get: function (target, key) {
+        track(target, key);
+        return target[key];
+    },
+    has: function (target, key) {
+        track(target, key);
+        return Reflect.has(target, key);
+    },
+    ownKeys: function (target) {
+        // 把副作用函数和 ITERATE_KEY 关联起来
+        track(target, ITERATE_KEY);
+        var res = Reflect.ownKeys(target);
+        console.log("res", res);
+        return res;
+    },
+    set: function (target, key, val, receiver) {
         var res = Reflect.set(target, key, val, receiver);
         trigger(target, key);
         return res;
@@ -67,12 +122,14 @@ function track(target, key) {
     deps.add(activeEffect);
     activeEffect.deps.push(deps);
 }
-function trigger(target, key) {
+function trigger(target, key, type) {
     var depsMap = bucket.get(target);
+    // 这个 target 没有绑定副作用函数
     if (!depsMap) {
-        return; // 没有这个 key 就不会触发了
+        return;
     }
     var effects = depsMap.get(key);
+    // 储存可以被执行的副作用函数
     var effectsToRun = new Set();
     effects &&
         effects.forEach(function (effectFn) {
@@ -80,6 +137,16 @@ function trigger(target, key) {
                 effectsToRun.add(effectFn);
             }
         });
+    // 和 ITERATE_KEY 相关的副作用函数
+    if (type == "ADD" || type == "DELETE") {
+        var iterateEffects = depsMap.get(ITERATE_KEY);
+        iterateEffects &&
+            iterateEffects.forEach(function (effectFn) {
+                if (effectFn != activeEffect) {
+                    effectsToRun.add(effectFn);
+                }
+            });
+    }
     effectsToRun.forEach(function (effectFn) {
         if (effectFn.options.scheduler) {
             effectFn.options.scheduler(effectFn);
@@ -189,4 +256,9 @@ effect(function () {
         console.log(i);
     }
 });
-obj.foo = false;
+effect(function () {
+    console.log("32323232323");
+    for (var i in obj_1) {
+        console.log(i);
+    }
+});

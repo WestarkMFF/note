@@ -7,8 +7,25 @@ interface EffectOptions {
   scheduler?: (fn: any) => any
 }
 
+/**
+ * 封装 hasOwnProperty 函数
+ * @param obj
+ * @param key
+ * @returns boolean
+ */
+function hasOwn(obj: Record<string, any>, key: any): boolean {
+  if (typeof obj != "object" || obj == null) return false
+
+  return Object.prototype.hasOwnProperty.call(obj, key)
+}
+
 let activeEffect: any // 当前激活的副作用函数 (effectFn)
 const effectStack: Array<any> = []
+
+enum TriggerType {
+  SET = "SET",
+  ADD = "ADD",
+}
 
 function effect(fn: () => void, options?: EffectOptions) {
   if (!options) options = {}
@@ -71,6 +88,57 @@ const obj = new Proxy(data, {
   },
 
   set(target, key, val, receiver) {
+    console.log("触发 set", key, val)
+
+    // 如果已经有 xx 属性就是 set, 否则是添加新属性
+    const type = hasOwn(target, key) ? "SET" : "ADD"
+
+    // 设置属性值
+    const res = Reflect.set(target, key, val, receiver)
+
+    trigger(target, key, type)
+    return res
+  },
+
+  /**
+   * 拦截删除操作
+   *
+   * exg: delete obj.foo
+   */
+  deleteProperty(target, key) {
+    const hadKey = hasOwn(target, key)
+    const res = Reflect.deleteProperty(target, key)
+
+    if (res && hadKey) {
+      trigger(target, key, "DELETE")
+    }
+
+    return res
+  },
+})
+
+const obj_1 = new Proxy(data, {
+  get(target: any, key) {
+    track(target, key)
+    return target[key]
+  },
+
+  has(target, key) {
+    track(target, key)
+    return Reflect.has(target, key)
+  },
+
+  ownKeys(target) {
+    // 把副作用函数和 ITERATE_KEY 关联起来
+    track(target, ITERATE_KEY)
+
+    const res = Reflect.ownKeys(target)
+
+    console.log("res", res)
+    return res
+  },
+
+  set(target, key, val, receiver) {
     const res = Reflect.set(target, key, val, receiver)
 
     trigger(target, key)
@@ -92,14 +160,17 @@ function track(target: any, key: any) {
   activeEffect.deps.push(deps)
 }
 
-function trigger(target: any, key: any) {
+function trigger(target: any, key: any, type?: "SET" | "ADD" | "DELETE") {
   const depsMap = bucket.get(target)
 
+  // 这个 target 没有绑定副作用函数
   if (!depsMap) {
-    return // 没有这个 key 就不会触发了
+    return
   }
 
   const effects = depsMap.get(key)
+
+  // 储存可以被执行的副作用函数
   const effectsToRun = new Set()
 
   effects &&
@@ -108,6 +179,17 @@ function trigger(target: any, key: any) {
         effectsToRun.add(effectFn)
       }
     })
+
+  // 和 ITERATE_KEY 相关的副作用函数
+  if (type == "ADD" || type == "DELETE") {
+    const iterateEffects = depsMap.get(ITERATE_KEY)
+    iterateEffects &&
+      iterateEffects.forEach((effectFn: any) => {
+        if (effectFn != activeEffect) {
+          effectsToRun.add(effectFn)
+        }
+      })
+  }
 
   effectsToRun.forEach((effectFn: any) => {
     if (effectFn.options.scheduler) {
@@ -235,4 +317,9 @@ effect(() => {
   }
 })
 
-obj.foo = false
+effect(() => {
+  console.log("32323232323")
+  for (let i in obj_1) {
+    console.log(i)
+  }
+})
