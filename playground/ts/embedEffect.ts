@@ -25,6 +25,7 @@ const effectStack: Array<any> = []
 enum TriggerType {
   SET = "SET",
   ADD = "ADD",
+  DELETE = "DELETE",
 }
 
 function effect(fn: () => void, options?: EffectOptions) {
@@ -66,85 +67,64 @@ const bucket = new WeakMap()
 const data = { text: "hello world", title: "fuck", ok: true, count: 222, num: 333 }
 const ITERATE_KEY = Symbol()
 
-const obj = new Proxy(data, {
-  get(target: any, key) {
-    track(target, key)
-    return target[key]
-  },
+function reactive(obj: any) {
+  return new Proxy(obj, {
+    get(target: any, key) {
+      track(target, key)
+      return target[key]
+    },
 
-  has(target, key) {
-    track(target, key)
-    return Reflect.has(target, key)
-  },
+    has(target, key) {
+      track(target, key)
+      return Reflect.has(target, key)
+    },
 
-  ownKeys(target) {
-    // 把副作用函数和 ITERATE_KEY 关联起来
-    track(target, ITERATE_KEY)
+    ownKeys(target) {
+      // 把副作用函数和 ITERATE_KEY 关联起来
+      track(target, ITERATE_KEY)
 
-    const res = Reflect.ownKeys(target)
+      const res = Reflect.ownKeys(target)
 
-    console.log("res", res)
-    return res
-  },
+      return res
+    },
 
-  set(target, key, val, receiver) {
-    console.log("触发 set", key, val)
+    set(target, key, val, receiver) {
+      // console.log("触发 set", key, val)
 
-    // 如果已经有 xx 属性就是 set, 否则是添加新属性
-    const type = hasOwn(target, key) ? "SET" : "ADD"
+      // 获取旧值
+      const oldValue = target[key]
 
-    // 设置属性值
-    const res = Reflect.set(target, key, val, receiver)
+      // 如果已经有 xx 属性就是 set, 否则是添加新属性
+      const type = hasOwn(target, key) ? "SET" : "ADD"
 
-    trigger(target, key, type)
-    return res
-  },
+      // 设置属性值
+      const res = Reflect.set(target, key, val, receiver)
 
-  /**
-   * 拦截删除操作
-   *
-   * exg: delete obj.foo
-   */
-  deleteProperty(target, key) {
-    const hadKey = hasOwn(target, key)
-    const res = Reflect.deleteProperty(target, key)
+      // 如果是 oldValue 和 newValue 都是 NaN 就不会触发副作用函数
+      if (oldValue !== val && (oldValue === oldValue || val === val)) {
+        trigger(target, key, type) // 触发副作用函数
+      }
 
-    if (res && hadKey) {
-      trigger(target, key, "DELETE")
-    }
+      return res
+    },
 
-    return res
-  },
-})
+    /**
+     * 拦截删除操作
+     *
+     * exg: delete obj.foo
+     */
+    deleteProperty(target, key) {
+      const hadKey = hasOwn(target, key)
+      const res = Reflect.deleteProperty(target, key)
 
-const obj_1 = new Proxy(data, {
-  get(target: any, key) {
-    track(target, key)
-    return target[key]
-  },
+      if (res && hadKey) {
+        trigger(target, key, "DELETE")
+      }
 
-  has(target, key) {
-    track(target, key)
-    return Reflect.has(target, key)
-  },
-
-  ownKeys(target) {
-    // 把副作用函数和 ITERATE_KEY 关联起来
-    track(target, ITERATE_KEY)
-
-    const res = Reflect.ownKeys(target)
-
-    console.log("res", res)
-    return res
-  },
-
-  set(target, key, val, receiver) {
-    const res = Reflect.set(target, key, val, receiver)
-
-    trigger(target, key)
-    return res
-  },
-})
+      return res
+    },
+  })
+}
 
 function track(target: any, key: any) {
   if (!activeEffect) return
@@ -311,15 +291,29 @@ function traverse(value: any, seen?: any) {
   return value
 }
 
-effect(() => {
-  for (let i in obj) {
-    console.log(i)
-  }
-})
+/**
+ * ----------------------------------
+ *
+ * 业务代码 👇
+ */
+
+const obj = {}
+const proto = { bar: 1 }
+const pb = { foo: 2 }
+// const child = reactive(obj)
+// const parentObj = reactive(proto)
+
+// Object.setPrototypeOf(child, parentObj)
+// console.log(child)
+
+Object.setPrototypeOf(obj, proto)
+Object.setPrototypeOf(obj, pb)
+
+console.log(obj)
 
 effect(() => {
-  console.log("32323232323")
-  for (let i in obj_1) {
-    console.log(i)
-  }
+  console.log("触发副作用函数")
+  // for (let i in obj) {
+  //   console.log(i)
+  // }
 })

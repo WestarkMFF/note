@@ -1,25 +1,8 @@
 <html>
   <body>
     <script src="./dist/renderer.js"></script>
-test
-    <script>
-      const oData = {
-        a: "a",
-        get b() {
-          console.log("this", this)
-          return this.a
-        },
-      }
-      const proxyData = new Proxy(oData, {
-        get(t, k, receiver) {
-          console.log("receiver", receiver == proxyData)
-          return Reflect.get(t, k, receiver)
-        },
-      })
-
-      console.log(proxyData.a)
-      console.log(proxyData.b)
-    </script>
+    test
+    <script></script>
 
     <!-- <script src="./dist/map.js"></script> -->
     <script src="./dist/embedEffect.js"></script>

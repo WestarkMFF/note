@@ -19,6 +19,7 @@ var TriggerType;
 (function (TriggerType) {
     TriggerType["SET"] = "SET";
     TriggerType["ADD"] = "ADD";
+    TriggerType["DELETE"] = "DELETE";
 })(TriggerType || (TriggerType = {}));
 function effect(fn, options) {
     if (!options)
@@ -49,67 +50,51 @@ function cleanup(effectFn, fn) {
 var bucket = new WeakMap();
 var data = { text: "hello world", title: "fuck", ok: true, count: 222, num: 333 };
 var ITERATE_KEY = Symbol();
-var obj = new Proxy(data, {
-    get: function (target, key) {
-        track(target, key);
-        return target[key];
-    },
-    has: function (target, key) {
-        track(target, key);
-        return Reflect.has(target, key);
-    },
-    ownKeys: function (target) {
-        // 把副作用函数和 ITERATE_KEY 关联起来
-        track(target, ITERATE_KEY);
-        var res = Reflect.ownKeys(target);
-        console.log("res", res);
-        return res;
-    },
-    set: function (target, key, val, receiver) {
-        console.log("触发 set", key, val);
-        // 如果已经有 xx 属性就是 set, 否则是添加新属性
-        var type = hasOwn(target, key) ? "SET" : "ADD";
-        // 设置属性值
-        var res = Reflect.set(target, key, val, receiver);
-        trigger(target, key, type);
-        return res;
-    },
-    /**
-     * 拦截删除操作
-     *
-     * exg: delete obj.foo
-     */
-    deleteProperty: function (target, key) {
-        var hadKey = hasOwn(target, key);
-        var res = Reflect.deleteProperty(target, key);
-        if (res && hadKey) {
-            trigger(target, key, "DELETE");
-        }
-        return res;
-    },
-});
-var obj_1 = new Proxy(data, {
-    get: function (target, key) {
-        track(target, key);
-        return target[key];
-    },
-    has: function (target, key) {
-        track(target, key);
-        return Reflect.has(target, key);
-    },
-    ownKeys: function (target) {
-        // 把副作用函数和 ITERATE_KEY 关联起来
-        track(target, ITERATE_KEY);
-        var res = Reflect.ownKeys(target);
-        console.log("res", res);
-        return res;
-    },
-    set: function (target, key, val, receiver) {
-        var res = Reflect.set(target, key, val, receiver);
-        trigger(target, key);
-        return res;
-    },
-});
+function reactive(obj) {
+    return new Proxy(obj, {
+        get: function (target, key) {
+            track(target, key);
+            return target[key];
+        },
+        has: function (target, key) {
+            track(target, key);
+            return Reflect.has(target, key);
+        },
+        ownKeys: function (target) {
+            // 把副作用函数和 ITERATE_KEY 关联起来
+            track(target, ITERATE_KEY);
+            var res = Reflect.ownKeys(target);
+            return res;
+        },
+        set: function (target, key, val, receiver) {
+            // console.log("触发 set", key, val)
+            // 获取旧值
+            var oldValue = target[key];
+            // 如果已经有 xx 属性就是 set, 否则是添加新属性
+            var type = hasOwn(target, key) ? "SET" : "ADD";
+            // 设置属性值
+            var res = Reflect.set(target, key, val, receiver);
+            // 如果是 oldValue 和 newValue 都是 NaN 就不会触发副作用函数
+            if (oldValue !== val && (oldValue === oldValue || val === val)) {
+                trigger(target, key, type); // 触发副作用函数
+            }
+            return res;
+        },
+        /**
+         * 拦截删除操作
+         *
+         * exg: delete obj.foo
+         */
+        deleteProperty: function (target, key) {
+            var hadKey = hasOwn(target, key);
+            var res = Reflect.deleteProperty(target, key);
+            if (res && hadKey) {
+                trigger(target, key, "DELETE");
+            }
+            return res;
+        },
+    });
+}
 function track(target, key) {
     if (!activeEffect)
         return;
@@ -251,14 +236,24 @@ function traverse(value, seen) {
     }
     return value;
 }
+/**
+ * ----------------------------------
+ *
+ * 业务代码 👇
+ */
+var obj = {};
+var proto = { bar: 1 };
+var pb = { foo: 2 };
+// const child = reactive(obj)
+// const parentObj = reactive(proto)
+// Object.setPrototypeOf(child, parentObj)
+// console.log(child)
+Object.setPrototypeOf(obj, proto);
+Object.setPrototypeOf(obj, pb);
+console.log(obj);
 effect(function () {
-    for (var i in obj) {
-        console.log(i);
-    }
-});
-effect(function () {
-    console.log("32323232323");
-    for (var i in obj_1) {
-        console.log(i);
-    }
+    console.log("触发副作用函数");
+    // for (let i in obj) {
+    //   console.log(i)
+    // }
 });
