@@ -70,6 +70,10 @@ const ITERATE_KEY = Symbol()
 function reactive(obj: any) {
   return new Proxy(obj, {
     get(target: any, key) {
+      if (key == "raw") {
+        return target
+      }
+
       track(target, key)
       return target[key]
     },
@@ -89,8 +93,6 @@ function reactive(obj: any) {
     },
 
     set(target, key, val, receiver) {
-      // console.log("触发 set", key, val)
-
       // 获取旧值
       const oldValue = target[key]
 
@@ -100,9 +102,12 @@ function reactive(obj: any) {
       // 设置属性值
       const res = Reflect.set(target, key, val, receiver)
 
-      // 如果是 oldValue 和 newValue 都是 NaN 就不会触发副作用函数
-      if (oldValue !== val && (oldValue === oldValue || val === val)) {
-        trigger(target, key, type) // 触发副作用函数
+      // receiver 是 target 的代理对象
+      if (target === receiver.raw) {
+        // 如果是 oldValue 和 newValue 都是 NaN 就不会触发副作用函数
+        if (oldValue !== val && (oldValue === oldValue || val === val)) {
+          trigger(target, key, type) // 触发副作用函数
+        }
       }
 
       return res
@@ -299,20 +304,15 @@ function traverse(value: any, seen?: any) {
 
 const obj = {}
 const proto = { bar: 1 }
-const pb = { foo: 2 }
-// const child = reactive(obj)
-// const parentObj = reactive(proto)
+const child = reactive(obj)
+const parentObj = reactive(proto)
 
-// Object.setPrototypeOf(child, parentObj)
-// console.log(child)
-
-Object.setPrototypeOf(obj, proto)
-Object.setPrototypeOf(obj, pb)
-
-console.log(obj)
+Object.setPrototypeOf(child, parentObj)
 
 effect(() => {
   console.log("触发副作用函数")
+
+  console.log(child.bar)
   // for (let i in obj) {
   //   console.log(i)
   // }

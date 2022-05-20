@@ -2,7 +2,22 @@
   <body>
     <script src="./dist/renderer.js"></script>
     test
-    <script></script>
+    <script>
+      const _a = { bar: 3 }
+
+      const _b = new Proxy(_a, {
+        get(t, k) {
+          return t[k]
+        },
+        set(t, k, v, r) {
+          console.log(r)
+          t[k] = v
+          return true
+        },
+      })
+
+      _b.bar = 4
+    </script>
 
     <!-- <script src="./dist/map.js"></script> -->
     <script src="./dist/embedEffect.js"></script>

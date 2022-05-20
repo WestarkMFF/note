@@ -53,6 +53,9 @@ var ITERATE_KEY = Symbol();
 function reactive(obj) {
     return new Proxy(obj, {
         get: function (target, key) {
+            if (key == "raw") {
+                return target;
+            }
             track(target, key);
             return target[key];
         },
@@ -67,16 +70,18 @@ function reactive(obj) {
             return res;
         },
         set: function (target, key, val, receiver) {
-            // console.log("触发 set", key, val)
             // 获取旧值
             var oldValue = target[key];
             // 如果已经有 xx 属性就是 set, 否则是添加新属性
             var type = hasOwn(target, key) ? "SET" : "ADD";
             // 设置属性值
             var res = Reflect.set(target, key, val, receiver);
-            // 如果是 oldValue 和 newValue 都是 NaN 就不会触发副作用函数
-            if (oldValue !== val && (oldValue === oldValue || val === val)) {
-                trigger(target, key, type); // 触发副作用函数
+            // receiver 是 target 的代理对象
+            if (target === receiver.raw) {
+                // 如果是 oldValue 和 newValue 都是 NaN 就不会触发副作用函数
+                if (oldValue !== val && (oldValue === oldValue || val === val)) {
+                    trigger(target, key, type); // 触发副作用函数
+                }
             }
             return res;
         },
@@ -243,16 +248,12 @@ function traverse(value, seen) {
  */
 var obj = {};
 var proto = { bar: 1 };
-var pb = { foo: 2 };
-// const child = reactive(obj)
-// const parentObj = reactive(proto)
-// Object.setPrototypeOf(child, parentObj)
-// console.log(child)
-Object.setPrototypeOf(obj, proto);
-Object.setPrototypeOf(obj, pb);
-console.log(obj);
+var child = reactive(obj);
+var parentObj = reactive(proto);
+Object.setPrototypeOf(child, parentObj);
 effect(function () {
     console.log("触发副作用函数");
+    console.log(child.bar);
     // for (let i in obj) {
     //   console.log(i)
     // }
