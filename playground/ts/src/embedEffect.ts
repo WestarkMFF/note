@@ -66,18 +66,33 @@ const bucket = new WeakMap()
 
 const ITERATE_KEY = Symbol()
 
-function reactive(obj: any): any {
+function reactive(obj: any) {
+  return createReactive(obj)
+}
+
+function shallowReactive(obj: any) {
+  return createReactive(obj, true)
+}
+
+function readOnly(obj: any) {
+  return createReactive(obj, false, true)
+}
+
+function createReactive(obj: any, isShallow?: boolean, isReadonly?: boolean): any {
   return new Proxy(obj, {
     get(target: any, key, receiver) {
       if (key == "raw") {
         return target
       }
 
-      track(target, key)
+      // readOnly 不需要建立响应式联系
+      if (!isReadonly) {
+        track(target, key)
+      }
 
       const res = Reflect.get(target, key, receiver)
 
-      if (typeof res == "object" && res !== null) {
+      if (isShallow && typeof res == "object" && res !== null) {
         return reactive(res)
       }
 
@@ -125,6 +140,11 @@ function reactive(obj: any): any {
      * exg: delete obj.foo
      */
     deleteProperty(target, key) {
+      if (isReadonly) {
+        console.warn(` key: ${key as any} is readOnly`)
+        return true
+      }
+
       const hadKey = hasOwn(target, key)
       const res = Reflect.deleteProperty(target, key)
 
@@ -313,5 +333,5 @@ const obj = reactive({ foo: { bar: 1 } })
 effect(() => {
   console.log("触发副作用函数")
 
-  console.log(obj.foo)
+  console.log(obj)
 })

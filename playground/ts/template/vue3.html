@@ -1,0 +1,40 @@
+<html>
+  <body>
+    <div id="app">
+      <input type="text" v-model="count" />
+
+      <br />
+
+      {{ count }}
+    </div>
+    <script type="module">
+      import { reactive, createApp, ref } from "https://lib.baomitu.com/vue/3.2.31/vue.esm-browser.js"
+
+      console.log(reactive)
+
+      const app = createApp({
+        setup() {
+          const count = ref(333)
+
+          const obj = reactive({
+            foo: {
+              bar: 1,
+            },
+          })
+
+          function test() {
+            document.title = count
+          }
+
+          return {
+            count,
+            obj,
+            test,
+          }
+        },
+      })
+
+      app.mount("#app")
+    </script>
+  </body>
+</html>
