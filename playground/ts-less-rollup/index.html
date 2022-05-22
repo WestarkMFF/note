@@ -1,0 +1,38 @@
+<html>
+  <body>
+    <link rel="stylesheet" href="./dist/style.css" />
+    <script type="module">
+      import generateTips from "./dist/index.js"
+
+      window.alert = generateTips
+
+      alert({
+        content: "tips 1, duration: 0",
+        duration: 0,
+        closable: true,
+      })
+
+      alert({
+        content: "tips 2, duration: 0",
+        closable: true,
+        duration: 0,
+      })
+
+      alert({
+        content: "tips 3, duration: 0",
+        closable: true,
+        duration: 0,
+      })
+      alert({
+        content: "tips 4, duration: 0",
+        duration: 0,
+        closable: true,
+      })
+      alert({
+        content: "tips 5, duration: 0",
+        duration: 0,
+        closable: true,
+      })
+    </script>
+  </body>
+</html>

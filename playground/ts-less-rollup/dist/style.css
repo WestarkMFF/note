@@ -1,0 +1,27 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+.eco_tips {
+  position: fixed;
+  top: 40px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+.eco_tips-item {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px 16px;
+  margin-bottom: 16px;
+  border-radius: 2px;
+  border: 1px solid #e5e6eb;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+.eco_tips-closeIcon {
+  margin-left: 8px;
+  cursor: pointer;
+  user-select: none;
+}

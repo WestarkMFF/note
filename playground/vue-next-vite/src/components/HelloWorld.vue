@@ -1,16 +1,27 @@
 <template>
   <h1>{{ msg }}</h1>
 
+  <a-button @click="onOpenMessage">test</a-button>
+
   <input type="text" v-model="count" />
   <DevComp :msg="msg" :count="count"></DevComp>
 </template>
 
 <script setup lang="ts">
-import { ref, defineComponent, h } from "vue";
-import DevComp from "./DevComp.vue";
+import { ref, defineComponent, h } from "vue"
+import { Message } from "@arco-design/web-vue"
+import DevComp from "./DevComp.vue"
 
-const count = ref(0);
-const msg = ref("hello world");
+const count = ref(0)
+const msg = ref("hello world")
+
+function onOpenMessage() {
+  Message.info({
+    content: "fuck",
+    duration: 204800000,
+    closable: true,
+  })
+}
 </script>
 
 <style scoped>
