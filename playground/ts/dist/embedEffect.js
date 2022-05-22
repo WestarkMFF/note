@@ -48,16 +48,19 @@ function cleanup(effectFn, fn) {
     effectFn.deps.length = 0;
 }
 var bucket = new WeakMap();
-var data = { text: "hello world", title: "fuck", ok: true, count: 222, num: 333 };
 var ITERATE_KEY = Symbol();
 function reactive(obj) {
     return new Proxy(obj, {
-        get: function (target, key) {
+        get: function (target, key, receiver) {
             if (key == "raw") {
                 return target;
             }
             track(target, key);
-            return target[key];
+            var res = Reflect.get(target, key, receiver);
+            if (typeof res == "object" && res !== null) {
+                return reactive(res);
+            }
+            return res;
         },
         has: function (target, key) {
             track(target, key);
@@ -246,15 +249,8 @@ function traverse(value, seen) {
  *
  * 业务代码 👇
  */
-var obj = {};
-var proto = { bar: 1 };
-var child = reactive(obj);
-var parentObj = reactive(proto);
-Object.setPrototypeOf(child, parentObj);
+var obj = reactive({ foo: { bar: 1 } });
 effect(function () {
     console.log("触发副作用函数");
-    console.log(child.bar);
-    // for (let i in obj) {
-    //   console.log(i)
-    // }
+    console.log(obj.foo.bar);
 });

@@ -64,18 +64,24 @@ function cleanup(effectFn: any, fn: any) {
 
 const bucket = new WeakMap()
 
-const data = { text: "hello world", title: "fuck", ok: true, count: 222, num: 333 }
 const ITERATE_KEY = Symbol()
 
-function reactive(obj: any) {
+function reactive(obj: any): any {
   return new Proxy(obj, {
-    get(target: any, key) {
+    get(target: any, key, receiver) {
       if (key == "raw") {
         return target
       }
 
       track(target, key)
-      return target[key]
+
+      const res = Reflect.get(target, key, receiver)
+
+      if (typeof res == "object" && res !== null) {
+        return reactive(res)
+      }
+
+      return res
     },
 
     has(target, key) {
@@ -302,18 +308,10 @@ function traverse(value: any, seen?: any) {
  * 业务代码 👇
  */
 
-const obj = {}
-const proto = { bar: 1 }
-const child = reactive(obj)
-const parentObj = reactive(proto)
-
-Object.setPrototypeOf(child, parentObj)
+const obj = reactive({ foo: { bar: 1 } })
 
 effect(() => {
   console.log("触发副作用函数")
 
-  console.log(child.bar)
-  // for (let i in obj) {
-  //   console.log(i)
-  // }
+  console.log(obj.foo.bar)
 })

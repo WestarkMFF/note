@@ -1,4 +1,4 @@
 "use strict";
-effect(function () {
-    console.log("foo" in obj);
-});
+// if (typeof res == "object" && res !== null) {
+//   return reactive(res)
+// }
