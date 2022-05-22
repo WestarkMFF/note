@@ -252,5 +252,5 @@ function traverse(value, seen) {
 var obj = reactive({ foo: { bar: 1 } });
 effect(function () {
     console.log("触发副作用函数");
-    console.log(obj.foo.bar);
+    console.log(obj.foo);
 });
