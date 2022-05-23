@@ -4,15 +4,17 @@
     test
 
     <script>
-      const o = new Proxy(
-        { foo: 1 },
-        {
-          deleteProperty(target, key) {
-            console.log("d")
-            return Reflect.deleteProperty(target, key)
-          },
-        }
-      )
+      const o = new Proxy([1], {
+        get(t, k) {
+          console.log("get trap", t, k)
+          return t[k]
+        },
+
+        set(t, k, v) {
+          console.log("set trap", t, k, v)
+          return true
+        },
+      })
     </script>
 
     <!-- <script src="./dist/map.js"></script> -->

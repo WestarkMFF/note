@@ -58,6 +58,13 @@ function shallowReactive(obj) {
 function readOnly(obj) {
     return createReactive(obj, false, true);
 }
+/**
+ * 创建响应式对象
+ * @param obj
+ * @param isShallow
+ * @param isReadonly
+ * @returns
+ */
 function createReactive(obj, isShallow, isReadonly) {
     return new Proxy(obj, {
         get: function (target, key, receiver) {
@@ -265,8 +272,14 @@ function traverse(value, seen) {
  *
  * 业务代码 👇
  */
-var obj = reactive({ foo: { bar: 1 } });
+// const obj = reactive({ foo: { bar: 1 } })
+// effect(() => {
+//   console.log("触发副作用函数")
+//   console.log(obj)
+// })
+var arr = reactive([1, 2, 3]);
+console.log("arr", arr);
 effect(function () {
-    console.log("触发副作用函数");
-    console.log(obj);
+    console.log("触发 arr 副作用函数");
+    console.log(arr[0]);
 });
