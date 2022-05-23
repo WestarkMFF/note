@@ -121,7 +121,7 @@ function createReactive(obj, isShallow, isReadonly) {
             if (target === receiver.raw) {
                 // 如果是 oldValue 和 newValue 都是 NaN 就不会触发副作用函数
                 if (oldValue !== val && (oldValue === oldValue || val === val)) {
-                    trigger(target, key, type); // 触发副作用函数
+                    trigger(target, key, type, val); // 触发副作用函数
                 }
             }
             return res;
@@ -157,7 +157,7 @@ function track(target, key) {
     deps.add(activeEffect);
     activeEffect.deps.push(deps);
 }
-function trigger(target, key, type) {
+function trigger(target, key, type, val) {
     var depsMap = bucket.get(target);
     // 这个 target 没有绑定副作用函数
     if (!depsMap) {
@@ -192,6 +192,18 @@ function trigger(target, key, type) {
                     effectsToRun.add(effectFn);
                 }
             });
+    }
+    if (isArr(target) && key == "length") {
+        // 对于索引 >= 新的 length 元素，取出副作用函数等待执行
+        depsMap.forEach(function (effects, key) {
+            if (key >= val) {
+                effects.forEach(function (effectFn) {
+                    if (effectFn != activeEffect) {
+                        effectsToRun.add(effectFn);
+                    }
+                });
+            }
+        });
     }
     effectsToRun.forEach(function (effectFn) {
         if (effectFn.options.scheduler) {

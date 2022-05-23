@@ -154,7 +154,7 @@ function createReactive(obj: any, isShallow?: boolean, isReadonly?: boolean): an
       if (target === receiver.raw) {
         // 如果是 oldValue 和 newValue 都是 NaN 就不会触发副作用函数
         if (oldValue !== val && (oldValue === oldValue || val === val)) {
-          trigger(target, key, type) // 触发副作用函数
+          trigger(target, key, type, val) // 触发副作用函数
         }
       }
 
@@ -198,7 +198,7 @@ function track(target: any, key: any) {
   activeEffect.deps.push(deps)
 }
 
-function trigger(target: any, key: any, type?: "SET" | "ADD" | "DELETE") {
+function trigger(target: any, key: any, type?: "SET" | "ADD" | "DELETE", val?: any) {
   const depsMap = bucket.get(target)
 
   // 这个 target 没有绑定副作用函数
@@ -240,6 +240,19 @@ function trigger(target: any, key: any, type?: "SET" | "ADD" | "DELETE") {
           effectsToRun.add(effectFn)
         }
       })
+  }
+
+  if (isArr(target) && key == "length") {
+    // 对于索引 >= 新的 length 元素，取出副作用函数等待执行
+    depsMap.forEach((effects: any, key: number) => {
+      if (key >= val) {
+        effects.forEach((effectFn: Function) => {
+          if (effectFn != activeEffect) {
+            effectsToRun.add(effectFn)
+          }
+        })
+      }
+    })
   }
 
   effectsToRun.forEach((effectFn: any) => {
