@@ -13,6 +13,15 @@ function hasOwn(obj, key) {
         return false;
     return Object.prototype.hasOwnProperty.call(obj, key);
 }
+function isArr(arr) {
+    try {
+        return Array.isArray(arr);
+    }
+    catch (e) {
+        console.warn("parse arr " + arr + " wrong: " + e);
+        return false;
+    }
+}
 var activeEffect; // 当前激活的副作用函数 (effectFn)
 var effectStack = [];
 var TriggerType;
@@ -92,10 +101,20 @@ function createReactive(obj, isShallow, isReadonly) {
             return res;
         },
         set: function (target, key, val, receiver) {
+            if (isReadonly) {
+                console.warn("key " + key + " is readOnly");
+                return true;
+            }
             // 获取旧值
             var oldValue = target[key];
             // 如果已经有 xx 属性就是 set, 否则是添加新属性
-            var type = hasOwn(target, key) ? "SET" : "ADD";
+            var type = Array.isArray(target)
+                ? Number(key) < target.length
+                    ? "SET"
+                    : "ADD"
+                : hasOwn(target, key)
+                    ? "SET"
+                    : "ADD";
             // 设置属性值
             var res = Reflect.set(target, key, val, receiver);
             // receiver 是 target 的代理对象
@@ -144,9 +163,20 @@ function trigger(target, key, type) {
     if (!depsMap) {
         return;
     }
-    var effects = depsMap.get(key);
     // 储存可以被执行的副作用函数
     var effectsToRun = new Set();
+    if (type === "ADD" && isArr(target)) {
+        // 取出 length 相关的副作用函数
+        var lengthEffect = depsMap.get("length");
+        // 待执行 length 相关的副作用函数
+        lengthEffect &&
+            lengthEffect.forEach(function (effectFn) {
+                if (effectFn != activeEffect) {
+                    // effectsToRun.add(effectFn)
+                }
+            });
+    }
+    var effects = depsMap.get(key);
     effects &&
         effects.forEach(function (effectFn) {
             if (effectFn !== activeEffect) {
@@ -277,9 +307,13 @@ function traverse(value, seen) {
 //   console.log("触发副作用函数")
 //   console.log(obj)
 // })
-var arr = reactive([1, 2, 3]);
+var arr = reactive([1]);
 console.log("arr", arr);
 effect(function () {
     console.log("触发 arr 副作用函数");
-    console.log(arr[0]);
+    console.log(arr[1]);
+});
+effect(function () {
+    console.log("arr length \u526F\u4F5C\u7528\u51FD\u6570");
+    console.log(arr.length);
 });

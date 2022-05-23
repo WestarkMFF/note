@@ -19,6 +19,15 @@ function hasOwn(obj: Record<string, any>, key: any): boolean {
   return Object.prototype.hasOwnProperty.call(obj, key)
 }
 
+function isArr(arr: any) {
+  try {
+    return Array.isArray(arr)
+  } catch (e) {
+    console.warn(`parse arr ${arr} wrong: ${e}`)
+    return false
+  }
+}
+
 let activeEffect: any // 当前激活的副作用函数 (effectFn)
 const effectStack: Array<any> = []
 
@@ -121,11 +130,22 @@ function createReactive(obj: any, isShallow?: boolean, isReadonly?: boolean): an
     },
 
     set(target, key, val, receiver) {
+      if (isReadonly) {
+        console.warn(`key ${key as any} is readOnly`)
+        return true
+      }
+
       // 获取旧值
       const oldValue = target[key]
 
       // 如果已经有 xx 属性就是 set, 否则是添加新属性
-      const type = hasOwn(target, key) ? "SET" : "ADD"
+      const type = Array.isArray(target)
+        ? Number(key) < target.length
+          ? "SET"
+          : "ADD"
+        : hasOwn(target, key)
+        ? "SET"
+        : "ADD"
 
       // 设置属性值
       const res = Reflect.set(target, key, val, receiver)
@@ -186,10 +206,23 @@ function trigger(target: any, key: any, type?: "SET" | "ADD" | "DELETE") {
     return
   }
 
-  const effects = depsMap.get(key)
-
   // 储存可以被执行的副作用函数
   const effectsToRun = new Set()
+
+  if (type === "ADD" && isArr(target)) {
+    // 取出 length 相关的副作用函数
+    const lengthEffect = depsMap.get("length")
+
+    // 待执行 length 相关的副作用函数
+    lengthEffect &&
+      lengthEffect.forEach((effectFn: any) => {
+        if (effectFn != activeEffect) {
+          // effectsToRun.add(effectFn)
+        }
+      })
+  }
+
+  const effects = depsMap.get(key)
 
   effects &&
     effects.forEach((effectFn: any) => {
@@ -343,11 +376,16 @@ function traverse(value: any, seen?: any) {
 //   console.log(obj)
 // })
 
-const arr = reactive([1, 2, 3])
+const arr = reactive([1])
 
 console.log("arr", arr)
 
 effect(() => {
   console.log("触发 arr 副作用函数")
-  console.log(arr[0])
+  console.log(arr[1])
+})
+
+effect(() => {
+  console.log(`arr length 副作用函数`)
+  console.log(arr.length)
 })
