@@ -1,3 +1,5 @@
+let log = console.log
+
 /**
  * effect
  */
@@ -74,9 +76,19 @@ function cleanup(effectFn: any, fn: any) {
 const bucket = new WeakMap()
 
 const ITERATE_KEY = Symbol()
+const reactiveMap = new Map()
 
 function reactive(obj: any) {
-  return createReactive(obj)
+  const existedProxy = reactiveMap.get(obj)
+
+  if (existedProxy) {
+    return existedProxy
+  }
+
+  const proxy = createReactive(obj)
+  reactiveMap.set(obj, proxy)
+
+  return proxy
 }
 
 function shallowReactive(obj: any) {
@@ -97,18 +109,22 @@ function readOnly(obj: any) {
 function createReactive(obj: any, isShallow?: boolean, isReadonly?: boolean): any {
   return new Proxy(obj, {
     get(target: any, key, receiver) {
+      console.log("get trap", target, key)
       if (key == "raw") {
         return target
       }
 
-      // readOnly 不需要建立响应式联系
-      if (!isReadonly) {
+      /**
+       * 迭代器的 key 是 symbol
+       */
+      if (!isReadonly && typeof key !== "symbol") {
+        // readOnly 不需要建立响应式联系
         track(target, key)
       }
 
       const res = Reflect.get(target, key, receiver)
 
-      if (isShallow && typeof res == "object" && res !== null) {
+      if (!isShallow && typeof res == "object" && res !== null) {
         return reactive(res)
       }
 
@@ -122,7 +138,7 @@ function createReactive(obj: any, isShallow?: boolean, isReadonly?: boolean): an
 
     ownKeys(target) {
       // 把副作用函数和 ITERATE_KEY 关联起来
-      track(target, ITERATE_KEY)
+      track(target, isArr(target) ? "length" : ITERATE_KEY)
 
       const res = Reflect.ownKeys(target)
 
@@ -389,16 +405,8 @@ function traverse(value: any, seen?: any) {
 //   console.log(obj)
 // })
 
-const arr = reactive([1])
+const obj = reactive({})
+const arr = reactive([obj])
 
-console.log("arr", arr)
-
-effect(() => {
-  console.log("触发 arr 副作用函数")
-  console.log(arr[1])
-})
-
-effect(() => {
-  console.log(`arr length 副作用函数`)
-  console.log(arr.length)
-})
+log(arr.includes(obj))
+log(arr)

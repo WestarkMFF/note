@@ -4,17 +4,22 @@
     test
 
     <script>
-      const o = new Proxy([1], {
-        get(t, k) {
-          console.log("get trap", t, k)
-          return t[k]
-        },
+      const _arr = [1, 2, 3, 4, 5]
 
-        set(t, k, v) {
-          console.log("set trap", t, k, v)
-          return true
-        },
-      })
+      // _arr[Symbol.iterator] = function () {
+      //   const target = this
+      //   const len = target.length
+      //   let index = 0
+
+      //   return {
+      //     next() {
+      //       return {
+      //         value: index < len ? target[index] : undefined,
+      //         done: index++ >= len,
+      //       }
+      //     },
+      //   }
+      // }
     </script>
 
     <!-- <script src="./dist/map.js"></script> -->

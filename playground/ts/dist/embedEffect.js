@@ -1,7 +1,5 @@
 "use strict";
-/**
- * effect
- */
+var log = console.log;
 /**
  * 封装 hasOwnProperty 函数
  * @param obj
@@ -58,8 +56,15 @@ function cleanup(effectFn, fn) {
 }
 var bucket = new WeakMap();
 var ITERATE_KEY = Symbol();
+var reactiveMap = new Map();
 function reactive(obj) {
-    return createReactive(obj);
+    var existedProxy = reactiveMap.get(obj);
+    if (existedProxy) {
+        return existedProxy;
+    }
+    var proxy = createReactive(obj);
+    reactiveMap.set(obj, proxy);
+    return proxy;
 }
 function shallowReactive(obj) {
     return createReactive(obj, true);
@@ -77,15 +82,19 @@ function readOnly(obj) {
 function createReactive(obj, isShallow, isReadonly) {
     return new Proxy(obj, {
         get: function (target, key, receiver) {
+            console.log("get trap", target, key);
             if (key == "raw") {
                 return target;
             }
-            // readOnly 不需要建立响应式联系
-            if (!isReadonly) {
+            /**
+             * 迭代器的 key 是 symbol
+             */
+            if (!isReadonly && typeof key !== "symbol") {
+                // readOnly 不需要建立响应式联系
                 track(target, key);
             }
             var res = Reflect.get(target, key, receiver);
-            if (isShallow && typeof res == "object" && res !== null) {
+            if (!isShallow && typeof res == "object" && res !== null) {
                 return reactive(res);
             }
             return res;
@@ -96,7 +105,7 @@ function createReactive(obj, isShallow, isReadonly) {
         },
         ownKeys: function (target) {
             // 把副作用函数和 ITERATE_KEY 关联起来
-            track(target, ITERATE_KEY);
+            track(target, isArr(target) ? "length" : ITERATE_KEY);
             var res = Reflect.ownKeys(target);
             return res;
         },
@@ -319,13 +328,7 @@ function traverse(value, seen) {
 //   console.log("触发副作用函数")
 //   console.log(obj)
 // })
-var arr = reactive([1]);
-console.log("arr", arr);
-effect(function () {
-    console.log("触发 arr 副作用函数");
-    console.log(arr[1]);
-});
-effect(function () {
-    console.log("arr length \u526F\u4F5C\u7528\u51FD\u6570");
-    console.log(arr.length);
-});
+var obj = reactive({});
+var arr = reactive([obj]);
+log(arr.includes(obj));
+log(arr);
