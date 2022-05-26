@@ -1,5 +1,12 @@
 "use strict";
 var log = console.log;
+function clg() {
+    var msg = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        msg[_i] = arguments[_i];
+    }
+    console.log("%c" + msg, "color: blue");
+}
 /**
  * 封装 hasOwnProperty 函数
  * @param obj
@@ -64,6 +71,7 @@ function reactive(obj) {
     }
     var proxy = createReactive(obj);
     reactiveMap.set(obj, proxy);
+    console.log("proxy", proxy);
     return proxy;
 }
 function shallowReactive(obj) {
@@ -72,6 +80,22 @@ function shallowReactive(obj) {
 function readOnly(obj) {
     return createReactive(obj, false, true);
 }
+var arrayInstrumentations = {};
+["includes", "indexOf", "lastIndexOf"].forEach(function (method) {
+    var originMethod = Array.prototype[method];
+    arrayInstrumentations[method] = function () {
+        // this 指向代理对象
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        var res = originMethod.apply(this, args);
+        if (res == false) {
+            res = originMethod.apply(this.raw, args);
+        }
+        return res;
+    };
+});
 /**
  * 创建响应式对象
  * @param obj
@@ -85,6 +109,13 @@ function createReactive(obj, isShallow, isReadonly) {
             console.log("get trap", target, key);
             if (key == "raw") {
                 return target;
+            }
+            /**
+             * 拦截 includes 等数组操作
+             */
+            if (isArr(target) && hasOwn(arrayInstrumentations, key)) {
+                console.log("key", key);
+                return Reflect.get(arrayInstrumentations, key, receiver);
             }
             /**
              * 迭代器的 key 是 symbol
@@ -328,7 +359,6 @@ function traverse(value, seen) {
 //   console.log("触发副作用函数")
 //   console.log(obj)
 // })
-var obj = reactive({});
-var arr = reactive([obj]);
-log(arr.includes(obj));
-log(arr);
+var obj = { a: 13 };
+var arr = reactive([obj, obj, , , obj]);
+console.log(arr.includes(obj));

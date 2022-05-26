@@ -1,5 +1,9 @@
 let log = console.log
 
+function clg(...msg: any[]) {
+  console.log("%c" + msg, "color: blue")
+}
+
 /**
  * effect
  */
@@ -87,7 +91,7 @@ function reactive(obj: any) {
 
   const proxy = createReactive(obj)
   reactiveMap.set(obj, proxy)
-
+  console.log("proxy", proxy)
   return proxy
 }
 
@@ -98,6 +102,24 @@ function shallowReactive(obj: any) {
 function readOnly(obj: any) {
   return createReactive(obj, false, true)
 }
+
+const arrayInstrumentations: any = {}
+
+;["includes", "indexOf", "lastIndexOf"].forEach((method: string) => {
+  const originMethod = Array.prototype[method as any]
+
+  arrayInstrumentations[method] = function (...args: [searchElement: any, fromIndex?: number | undefined]) {
+    // this 指向代理对象
+
+    let res = originMethod.apply(this, args)
+
+    if (res == false) {
+      res = originMethod.apply(this.raw, args)
+    }
+
+    return res
+  }
+})
 
 /**
  * 创建响应式对象
@@ -112,6 +134,14 @@ function createReactive(obj: any, isShallow?: boolean, isReadonly?: boolean): an
       console.log("get trap", target, key)
       if (key == "raw") {
         return target
+      }
+
+      /**
+       * 拦截 includes 等数组操作
+       */
+      if (isArr(target) && hasOwn(arrayInstrumentations, key)) {
+        console.log("key", key)
+        return Reflect.get(arrayInstrumentations, key, receiver)
       }
 
       /**
@@ -405,8 +435,7 @@ function traverse(value: any, seen?: any) {
 //   console.log(obj)
 // })
 
-const obj = reactive({})
-const arr = reactive([obj])
+const obj = { a: 13 }
+const arr = reactive([obj, obj, , , obj])
 
-log(arr.includes(obj))
-log(arr)
+console.log(arr.includes(obj))
