@@ -96,6 +96,20 @@ var arrayInstrumentations = {};
         return res;
     };
 });
+var shouldTrack = true;
+["push", "pop", "shift", "unshift", "splice"].forEach(function (method) {
+    var originMethod = Array.prototype[method];
+    arrayInstrumentations[method] = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        shouldTrack = false;
+        var res = originMethod.apply(this, args);
+        shouldTrack = true;
+        return res;
+    };
+});
 /**
  * 创建响应式对象
  * @param obj
@@ -186,7 +200,7 @@ function createReactive(obj, isShallow, isReadonly) {
     });
 }
 function track(target, key) {
-    if (!activeEffect)
+    if (!activeEffect || !shouldTrack)
         return;
     var depsMap = bucket.get(target);
     if (!depsMap)
@@ -360,5 +374,10 @@ function traverse(value, seen) {
 //   console.log(obj)
 // })
 var obj = { a: 13 };
-var arr = reactive([obj, obj, , , obj]);
-console.log(arr.includes(obj));
+var arr = reactive([]);
+effect(function () {
+    arr.push(1);
+});
+effect(function () {
+    arr.push(1);
+});

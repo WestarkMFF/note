@@ -121,6 +121,21 @@ const arrayInstrumentations: any = {}
   }
 })
 
+let shouldTrack = true
+
+;["push", "pop", "shift", "unshift", "splice"].forEach((method: string) => {
+  const originMethod = Array.prototype[method as any]
+  arrayInstrumentations[method] = function (...args: any[]) {
+    shouldTrack = false
+
+    let res = originMethod.apply(this, args)
+
+    shouldTrack = true
+
+    return res
+  }
+})
+
 /**
  * 创建响应式对象
  * @param obj
@@ -231,7 +246,7 @@ function createReactive(obj: any, isShallow?: boolean, isReadonly?: boolean): an
 }
 
 function track(target: any, key: any) {
-  if (!activeEffect) return
+  if (!activeEffect || !shouldTrack) return
 
   let depsMap = bucket.get(target)
   if (!depsMap) bucket.set(target, (depsMap = new Map()))
@@ -436,6 +451,12 @@ function traverse(value: any, seen?: any) {
 // })
 
 const obj = { a: 13 }
-const arr = reactive([obj, obj, , , obj])
+const arr = reactive([])
 
-console.log(arr.includes(obj))
+effect(() => {
+  arr.push(1)
+})
+
+effect(() => {
+  arr.push(1)
+})
