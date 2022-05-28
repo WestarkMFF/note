@@ -3,29 +3,7 @@
     <script src="./dist/renderer.js"></script>
     test
 
-    <script>
-      const _arr = [1, 2, 3, 4, 5]
-
-      const s = new Set([1, 2, 3])
-      const g = new Proxy(s, {
-        get(target, key, receiver) {
-          console.log(target, key)
-
-          if (key == "size") {
-            return Reflect.get(target, key, target)
-          }
-
-          // console.log(target[key])
-          // return Reflect.get(target, key, receiver)
-          console.log(target[key])
-
-          return target[key].bind(target)
-        },
-      })
-
-      console.log(g.size)
-      console.log(g.has(3))
-    </script>
+    <script></script>
 
     <!-- <script src="./dist/map.js"></script> -->
     <script src="./dist/embedEffect.js"></script>

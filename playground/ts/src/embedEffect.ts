@@ -91,7 +91,6 @@ function reactive(obj: any) {
 
   const proxy = createReactive(obj)
   reactiveMap.set(obj, proxy)
-  console.log("proxy", proxy)
   return proxy
 }
 
@@ -245,6 +244,56 @@ function createReactive(obj: any, isShallow?: boolean, isReadonly?: boolean): an
   })
 }
 
+const mutableInstrumentations: any = {
+  add(key: any) {
+    // this.raw => 原始对象
+    const target = this.raw
+
+    const hadKey = target.has(key)
+    const res = target.add(key)
+
+    if (!hadKey) {
+      trigger(target, key, "ADD")
+    }
+
+    return res
+  },
+
+  delete(key: any) {
+    const target = this.raw
+
+    const hadKey = target.has(key)
+
+    const res = target.delete(key)
+
+    if (hadKey) {
+      trigger(target, key, "DELETE")
+    }
+
+    return res
+  },
+}
+
+/**
+ * 创建 set, map 响应式
+ * @param obj
+ */
+function createSetReactive(obj: any, isShallow?: boolean, isReadOnly?: boolean) {
+  return new Proxy(obj, {
+    get(target, key, receiver) {
+      console.log("read set key: ", key)
+      if (key == "raw") return target
+      if (key == "size") {
+        track(target, ITERATE_KEY)
+        return Reflect.get(target, key, target)
+      }
+
+      return mutableInstrumentations[key]
+      // return target[key].bind(target)
+    },
+  })
+}
+
 function track(target: any, key: any) {
   if (!activeEffect || !shouldTrack) return
 
@@ -278,7 +327,7 @@ function trigger(target: any, key: any, type?: "SET" | "ADD" | "DELETE", val?: a
     lengthEffect &&
       lengthEffect.forEach((effectFn: any) => {
         if (effectFn != activeEffect) {
-          // effectsToRun.add(effectFn)
+          effectsToRun.add(effectFn)
         }
       })
   }
@@ -450,13 +499,12 @@ function traverse(value: any, seen?: any) {
 //   console.log(obj)
 // })
 
-const obj = { a: 13 }
-const arr = reactive([])
+const set = new Set([1, 2, 3, 4])
+const ps = createSetReactive(set)
 
 effect(() => {
-  arr.push(1)
+  console.log("触发响应式")
+  console.log(ps.size)
 })
 
-effect(() => {
-  arr.push(1)
-})
+ps.delete(3)

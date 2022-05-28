@@ -71,7 +71,6 @@ function reactive(obj) {
     }
     var proxy = createReactive(obj);
     reactiveMap.set(obj, proxy);
-    console.log("proxy", proxy);
     return proxy;
 }
 function shallowReactive(obj) {
@@ -199,6 +198,46 @@ function createReactive(obj, isShallow, isReadonly) {
         },
     });
 }
+var mutableInstrumentations = {
+    add: function (key) {
+        // this.raw => 原始对象
+        var target = this.raw;
+        var hadKey = target.has(key);
+        var res = target.add(key);
+        if (!hadKey) {
+            trigger(target, key, "ADD");
+        }
+        return res;
+    },
+    delete: function (key) {
+        var target = this.raw;
+        var hadKey = target.has(key);
+        var res = target.delete(key);
+        if (hadKey) {
+            trigger(target, key, "DELETE");
+        }
+        return res;
+    },
+};
+/**
+ * 创建 set, map 响应式
+ * @param obj
+ */
+function createSetReactive(obj, isShallow, isReadOnly) {
+    return new Proxy(obj, {
+        get: function (target, key, receiver) {
+            console.log("read set key: ", key);
+            if (key == "raw")
+                return target;
+            if (key == "size") {
+                track(target, ITERATE_KEY);
+                return Reflect.get(target, key, target);
+            }
+            return mutableInstrumentations[key];
+            // return target[key].bind(target)
+        },
+    });
+}
 function track(target, key) {
     if (!activeEffect || !shouldTrack)
         return;
@@ -226,7 +265,7 @@ function trigger(target, key, type, val) {
         lengthEffect &&
             lengthEffect.forEach(function (effectFn) {
                 if (effectFn != activeEffect) {
-                    // effectsToRun.add(effectFn)
+                    effectsToRun.add(effectFn);
                 }
             });
     }
@@ -373,11 +412,10 @@ function traverse(value, seen) {
 //   console.log("触发副作用函数")
 //   console.log(obj)
 // })
-var obj = { a: 13 };
-var arr = reactive([]);
+var set = new Set([1, 2, 3, 4]);
+var ps = createSetReactive(set);
 effect(function () {
-    arr.push(1);
+    console.log("触发响应式");
+    console.log(ps.size);
 });
-effect(function () {
-    arr.push(1);
-});
+ps.delete(3);
