@@ -324,26 +324,31 @@ const mutableInstrumentations: any = {
     return createSetReactive(res)
   },
 
-  [Symbol.iterator]() {
-    const target = this.raw
+  [Symbol.iterator]: iterationMethod,
+  entries: iterationMethod,
+}
 
-    const itr = target[Symbol.iterator]()
+function iterationMethod() {
+  const target = this.raw
+  const itr = target[Symbol.iterator]()
 
-    const wrap = (val: any) => (typeof val === "object" && val !== null ? createSetReactive(val) : val)
+  const wrap = (val) => (typeof val === "object" ? createSetReactive(val) : val)
 
-    track(target, ITERATE_KEY)
+  track(target, ITERATE_KEY)
 
-    return {
-      next() {
-        const { value, done } = itr.next()
+  return {
+    next() {
+      const { value, done } = itr.next()
+      return {
+        value: value ? [wrap(value[0]), wrap(value[1])] : value,
+        done,
+      }
+    },
 
-        return {
-          value: value ? [wrap(value[0]), wrap(value[1])] : value,
-          done,
-        }
-      },
-    }
-  },
+    [Symbol.iterator]() {
+      return this
+    },
+  }
 }
 
 /**
@@ -584,4 +589,6 @@ effect(() => {
   }
 })
 
-_p.set("key3", "value3")
+for (const [key, value] of _p.entries()) {
+  console.log(key, value)
+}
