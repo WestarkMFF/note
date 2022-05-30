@@ -4,6 +4,12 @@ function clg(...msg: any[]) {
   console.log("%c" + msg, "color: blue")
 }
 
+const _toString = Object.prototype.toString
+
+function rawType(v: any) {
+  return _toString.call(v).slice(8, -1)
+}
+
 /**
  * effect
  */
@@ -259,6 +265,25 @@ const mutableInstrumentations: any = {
     return res
   },
 
+  set(key: any, value: any) {
+    const target = this.raw
+
+    const had = target.has(key)
+
+    const oldValue = target.get(key)
+
+    // value.raw 设置原始数据
+    const rawValue = value.raw || value
+
+    target.set(key, rawValue)
+
+    if (!had) {
+      trigger(target, key, "ADD")
+    } else if (oldValue !== value || (oldValue === oldValue && value === value)) {
+      trigger(target, key, "SET")
+    }
+  },
+
   delete(key: any) {
     const target = this.raw
 
@@ -271,6 +296,53 @@ const mutableInstrumentations: any = {
     }
 
     return res
+  },
+
+  forEach(cb: Function) {
+    const target = this.raw
+    const wrapperFunction = (val: any) => {
+      if (typeof val != "object") return val
+      const _rawType = rawType(val)
+      if (["Map", "Set"].includes(_rawType)) {
+        return createSetReactive(val)
+      } else {
+        return reactive(val)
+      }
+    }
+
+    track(target, ITERATE_KEY)
+
+    target.forEach((v, k) => {
+      cb(wrapperFunction(v), wrapperFunction(k), this)
+    })
+  },
+
+  get(key) {
+    const target = this.raw
+
+    const res = target.get(key)
+    return createSetReactive(res)
+  },
+
+  [Symbol.iterator]() {
+    const target = this.raw
+
+    const itr = target[Symbol.iterator]()
+
+    const wrap = (val: any) => (typeof val === "object" && val !== null ? createSetReactive(val) : val)
+
+    track(target, ITERATE_KEY)
+
+    return {
+      next() {
+        const { value, done } = itr.next()
+
+        return {
+          value: value ? [wrap(value[0]), wrap(value[1])] : value,
+          done,
+        }
+      },
+    }
   },
 }
 
@@ -342,7 +414,7 @@ function trigger(target: any, key: any, type?: "SET" | "ADD" | "DELETE", val?: a
     })
 
   // 和 ITERATE_KEY 相关的副作用函数
-  if (type == "ADD" || type == "DELETE") {
+  if (type == "ADD" || type == "DELETE" || (type == "SET" && rawType(target) == "Map")) {
     const iterateEffects = depsMap.get(ITERATE_KEY)
     iterateEffects &&
       iterateEffects.forEach((effectFn: any) => {
@@ -499,12 +571,17 @@ function traverse(value: any, seen?: any) {
 //   console.log(obj)
 // })
 
-const set = new Set([1, 2, 3, 4])
-const ps = createSetReactive(set)
+const _p = createSetReactive(
+  new Map([
+    ["key1", "value1"],
+    ["key2", "value2"],
+  ])
+)
 
 effect(() => {
-  console.log("触发响应式")
-  console.log(ps.size)
+  for (const [key, value] of _p) {
+    log(key, value)
+  }
 })
 
-ps.delete(3)
+_p.set("key3", "value3")
