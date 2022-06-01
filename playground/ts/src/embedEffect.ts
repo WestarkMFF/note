@@ -646,3 +646,5 @@ const obj = reactive({ foo: 1, bar: 1 })
 const newObj = proxyRefs({ ...toRefs(obj) })
 
 console.log(newObj.foo)
+
+export { ref, toRef, toRefs, reactive }
