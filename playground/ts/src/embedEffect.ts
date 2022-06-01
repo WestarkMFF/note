@@ -100,6 +100,77 @@ function reactive(obj: any) {
   return proxy
 }
 
+type BasicType = string | number | boolean | bigint
+
+// 封装 wrapper 函数
+function ref(val: BasicType) {
+  const wrapper = {
+    value: val,
+  }
+
+  Object.defineProperty(wrapper, "__v_isRef", {
+    value: true,
+  })
+
+  return reactive(wrapper)
+}
+
+/**
+ * obj 接收一个响应式对象
+ */
+function toRef(obj: any, key: any) {
+  const wrapper = {
+    get value() {
+      return obj[key]
+    },
+
+    set value(val) {
+      obj[key] = val
+    },
+  }
+
+  Object.defineProperty(wrapper, "__v_isRef", {
+    value: true,
+  })
+
+  return wrapper
+}
+
+/**
+ * 接收一个响应式对象，返回一个被 ref 包裹的 响应式对象
+ */
+function toRefs(obj: any) {
+  const ret: any = {}
+
+  for (const key in obj) {
+    ret[key] = toRef(obj, key)
+  }
+
+  return ret
+}
+
+/**
+ * target 是一个响应式对象
+ */
+function proxyRefs(target: any) {
+  return new Proxy(target, {
+    get(target, key, receiver) {
+      const value = Reflect.get(target, key, receiver)
+
+      return value.__v_isRef ? value.value : value
+    },
+
+    set(target, key, newValue, receiver) {
+      if (target[key].__v_isRef) {
+        target[key].value = newValue
+        return true
+      }
+
+      return Reflect.set(target, key, newValue, reactive)
+    },
+  })
+}
+
 function shallowReactive(obj: any) {
   return createReactive(obj, true)
 }
@@ -326,15 +397,18 @@ const mutableInstrumentations: any = {
 
   [Symbol.iterator]: iterationMethod,
   entries: iterationMethod,
+  values: iterationMethod,
 }
 
 function iterationMethod() {
   const target = this.raw
   const itr = target[Symbol.iterator]()
 
-  const wrap = (val) => (typeof val === "object" ? createSetReactive(val) : val)
+  const wrap = (val: any) => (typeof val === "object" ? createSetReactive(val) : val)
 
   track(target, ITERATE_KEY)
+
+  console.log("this", this)
 
   return {
     next() {
@@ -568,27 +642,7 @@ function traverse(value: any, seen?: any) {
  * 业务代码 👇
  */
 
-// const obj = reactive({ foo: { bar: 1 } })
+const obj = reactive({ foo: 1, bar: 1 })
+const newObj = proxyRefs({ ...toRefs(obj) })
 
-// effect(() => {
-//   console.log("触发副作用函数")
-
-//   console.log(obj)
-// })
-
-const _p = createSetReactive(
-  new Map([
-    ["key1", "value1"],
-    ["key2", "value2"],
-  ])
-)
-
-effect(() => {
-  for (const [key, value] of _p) {
-    log(key, value)
-  }
-})
-
-for (const [key, value] of _p.entries()) {
-  console.log(key, value)
-}
+console.log(newObj.foo)
