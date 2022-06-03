@@ -1,52 +1,39 @@
-interface VnodeType {
-  tag: string
-  props?: Record<string, any>
-  children: string | Array<VnodeType>
-
-
-	type: string
-}
-
-declare global {
-  interface HTMLElement {
-    _vnode: any
-  }
-}
+// render 模型
 
 import { effect, ref } from "@vue/reactivity"
+import { VnodeType, RenderOpt } from "./types/renderer"
 
-function createRenderer() {
+function createRenderer(opt: RenderOpt) {
+  const { createElement, setElementText, insert } = opt
+
   function path(n1: VnodeType | null, n2: VnodeType, container: HTMLElement) {
-		/**
-		 * 渲染逻辑
-		 * 如果没有 新DOM 则意味着挂载 
-		 */
-		if(!n1){
+    /**
+     * 渲染逻辑
+     * 如果没有 新DOM 则意味着挂载
+     */
+    if (!n1) {
+      mountElement(n2, container)
+    } else {
+      /**
+       * 如果 新DOM 存在意味着 patch
+       */
+    }
+  }
 
-		} else{
-			/**
-			 * 如果 新DOM 存在意味着 patch
-			 */
-		}
-	}
+  /**
+   * 挂载逻辑
+   */
+  function mountElement(vnode: VnodeType, container: HTMLElement) {
+    // 创建一个 DOM
+    const el = createElement(vnode.type)
+    if (typeof vnode.children === "string") {
+      setElementText(el, vnode.children)
+    }
 
-	/**
-	 * 挂载逻辑
-	 */
-	function mountElement(vnode:VnodeType,container:HTMLElement){
-		// 创建一个 DOM
-		const el = document.createElement(vnode.type)
+    insert(el, container)
+  }
 
-		if(typeof vnode.children === 'string') {
-			el.textContent = vnode.children
-		}
-
-		container.appendChild(el)
-
-
-	}
-
-  function render(vnode: VnodeType, container: HTMLElement) {
+  function render(vnode: VnodeType, container: any) {
     if (vnode) {
       path(container._vnode, vnode, container)
     } else {
@@ -55,7 +42,6 @@ function createRenderer() {
         container.innerHTML = ""
       }
     }
-
     container._vnode = vnode
   }
 
@@ -64,4 +50,30 @@ function createRenderer() {
   }
 }
 
-const count = ref(1)
+const renderer = createRenderer({
+  createElement(tag: string) {
+    console.log(`创建元素${tag}`)
+    return { tag }
+  },
+
+  setElementText(el: HTMLElement, text: string) {
+    console.log(`设置 ${JSON.stringify(el)} 的内容为: ${text}`)
+    el.textContent = text
+  },
+
+  insert(el: VnodeType, parent: VnodeType, anchor?: HTMLElement | null) {
+    console.log(`将 ${JSON.stringify(el)} 添加到 ${JSON.stringify(parent)} 下`)
+    if (!anchor) anchor = null
+
+    parent.children = el
+  },
+})
+
+const vnode = {
+  type: "h1",
+  children: "hello",
+}
+
+const container = { type: "root" }
+
+renderer.render(vnode, container)
