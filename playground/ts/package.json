@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "npx rollup -c -w",
+    "vite": "vite",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -18,6 +19,8 @@
     "@rollup/plugin-node-resolve": "^13.3.0",
     "@rollup/plugin-replace": "^4.0.0",
     "rollup": "^2.75.4",
+    "rollup-plugin-server": "^0.7.0",
+    "vite": "^2.9.9",
     "vue": "^3.2.36"
   }
 }
