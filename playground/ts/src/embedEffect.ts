@@ -1,3 +1,4 @@
+import { hasOwn, isArr } from "./utils/index"
 let log = console.log
 
 function clg(...msg: any[]) {
@@ -17,27 +18,6 @@ function rawType(v: any) {
 interface EffectOptions {
   lazy?: boolean
   scheduler?: (fn: any) => any
-}
-
-/**
- * 封装 hasOwnProperty 函数
- * @param obj
- * @param key
- * @returns boolean
- */
-function hasOwn(obj: Record<string, any>, key: any): boolean {
-  if (typeof obj != "object" || obj == null) return false
-
-  return Object.prototype.hasOwnProperty.call(obj, key)
-}
-
-function isArr(arr: any) {
-  try {
-    return Array.isArray(arr)
-  } catch (e) {
-    console.warn(`parse arr ${arr} wrong: ${e}`)
-    return false
-  }
 }
 
 let activeEffect: any // 当前激活的副作用函数 (effectFn)
