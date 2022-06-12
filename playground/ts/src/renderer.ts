@@ -4,6 +4,10 @@ import { effect, ref } from "@vue/reactivity"
 import { VnodeType, RenderOpt, ContainerType } from "./types/renderer"
 import { isArr } from "./utils"
 
+/**
+ * render => patch => mountElement => insert
+ */
+
 function createRenderer(opt: RenderOpt) {
   const { createElement, setElementText, insert, patchProps } = opt
 
@@ -27,7 +31,7 @@ function createRenderer(opt: RenderOpt) {
    */
   function mountElement(vnode: VnodeType, container: ContainerType) {
     // 创建一个 DOM
-    const el = createElement(vnode.type)
+    const el = (vnode.el = createElement(vnode.type))
     if (typeof vnode.children === "string") {
       setElementText(el, vnode.children)
     } else if (Array.isArray(vnode.children)) {
@@ -54,7 +58,10 @@ function createRenderer(opt: RenderOpt) {
     } else {
       // 清空 vnode
       if (container._vnode) {
-        container.innerHTML = ""
+        const el = container._vnode.el
+        const parent = el?.parentNode
+
+        if (parent) parent.removeChild(el)
       }
     }
     container._vnode = vnode
@@ -84,16 +91,18 @@ const renderer = createRenderer({
   /**
    * 这里把 container 抽象为 parent
    */
-  insert(el: VnodeType, parent: ContainerType, anchor?: HTMLElement | null) {
+  insert(el: ContainerType, parent: ContainerType, anchor?: HTMLElement | null) {
     if (!anchor) anchor = null
 
     if (parent.insertBefore) {
-      parent.insertBefore(el as HTMLElement, anchor)
+      parent.insertBefore(el, anchor)
     }
   },
 
   patchProps(el, key, prevValue, nextValue) {
-    if (shouldSetAsProps(el, key, nextValue)) {
+    if (key == "class") {
+      el.className = nextValue
+    } else if (shouldSetAsProps(el, key, nextValue)) {
       const type = typeof el[key]
       if (type == "boolean" && nextValue == "") {
         el[key] = true
@@ -110,6 +119,7 @@ const vnode = {
   type: "input",
   props: {
     disabled: "",
+    class: "shit",
   },
 }
 

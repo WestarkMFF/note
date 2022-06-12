@@ -9,6 +9,8 @@ export interface VnodeType {
    * 用来描述一个 vnode 的标签属性
    */
   props?: any
+
+  el?: ContainerType
 }
 
 export interface ContainerType extends HTMLElement {
