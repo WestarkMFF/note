@@ -8,12 +8,14 @@ export interface VnodeType {
   /**
    * 用来描述一个 vnode 的标签属性
    */
-  props?: any
+  props?: Record<string, any>
 
   el?: ContainerType
+
+  onclick?: Function | Array<Function>
 }
 
-export interface ContainerType extends HTMLElement {
+export interface ContainerType extends Element {
   type?: string
 
   /**
@@ -21,7 +23,11 @@ export interface ContainerType extends HTMLElement {
    *
    * learn: 如果带上 ‘?’ 可选操作符，那么会默认带上 undefined 类型
    */
-  _vnode?: VnodeType | null
+  _vnode?: VnodeType | null | undefined
+
+  class?: string
+
+  _vei?: any
 }
 
 /**
@@ -30,15 +36,15 @@ export interface ContainerType extends HTMLElement {
 export interface RenderOpt {
   createElement: (string) => ContainerType
 
-  setElementText: (HTMLElement, string) => void
+  setElementText: (Element, string) => void
 
-  insert: (VnodeType, VnodeType, HTMLElement?) => void
+  insert: (VnodeType, VnodeType, Element?) => void
 
   patchProps: (ContainerType, string, any, any) => void
 }
 
 declare global {
-  interface HTMLElement {
+  interface Element {
     _vnode: any
   }
 }

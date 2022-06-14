@@ -2,6 +2,18 @@
   <body>
     <div id="app"></div>
 
+    <button id="test">test</button>
+    <script>
+      const test = document.querySelector("#test")
+
+      const df = () => {
+        console.log("fuck")
+      }
+      test.addEventListener("click", df)
+      test.addEventListener("click", () => {
+				console.log('qq')
+			})
+    </script>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>
