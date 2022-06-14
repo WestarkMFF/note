@@ -9,7 +9,7 @@ import { isArr } from "./utils"
  */
 
 function createRenderer(opt: RenderOpt) {
-  const { createElement, setElementText, insert, patchProps } = opt
+  const { createElement, setElementText, insert, patchProps, createText, setText } = opt
 
   function patch(n1: VnodeType | null | undefined, n2: VnodeType, container: ContainerType) {
     console.log("patch", n1)
@@ -45,11 +45,107 @@ function createRenderer(opt: RenderOpt) {
         /**
          * 如果 新DOM 存在意味着 patch
          */
-        // patchElement(n1,n2)
+        patchElement(n1, n2)
+      }
+    } else if (type == Text) {
+      if (!n1) {
+        const el = (n2.el = createText(n2.children))
+
+        insert(el, container)
+      } else {
+        const el = (n2.el = n1.el)
+
+        if (n2.children != n1.children) {
+          setText(n2, n1.children)
+        }
+      }
+    } else if (type == Comment) {
+    } else if (type == Fragment) {
+      /**
+       * 处理 fragment 类型的节点
+       */
+      if (!n1) {
+        Array.isArray(n2.children) && n2.children.forEach((c) => patch(null, c, container))
+      } else {
+        patchChildren(n1, n2, container)
       }
     } else if (typeof type === "object") {
     } else {
       // 其它类型的 vnode
+    }
+  }
+
+  /**
+   * patch 更新逻辑
+   */
+  function patchElement(n1: VnodeType, n2: VnodeType) {
+    /**
+     * 把 n1(旧 vn) 的 el 给到 n2
+     */
+    const el = (n2.el = n1.el)
+
+    const oldProps = n1.props || {}
+    const newProps = n2.props || {}
+
+    for (const key in newProps) {
+      if (newProps[key] !== oldProps[key]) {
+        patchProps(el, key, oldProps[key], newProps[key])
+      }
+    }
+
+    for (const key in oldProps) {
+      if (!(key in newProps)) {
+        patchProps(el, key, oldProps[key], null)
+      }
+    }
+
+    patchChildren(n1, n2, el as ContainerType)
+  }
+
+  /**
+   * 更新子元素
+   */
+  function patchChildren(n1: VnodeType, n2: VnodeType, container: ContainerType) {
+    if (typeof n2.children == "string") {
+      /**
+       * 判断新节点是否是文本节点
+       *
+       * 卸载旧 vn 的子元素
+       */
+      if (Array.isArray(n1.children)) {
+        n1.children.forEach((c) => unmount(c))
+      }
+
+      setElementText(container, n2.children)
+    } else if (Array.isArray(n2.children)) {
+      /**
+       * 如果新节点是 array
+       *
+       * 判断旧节点是不是 array
+       *
+       * 如果是的话，那就是说新旧节点都是 一组节点，涉及到 diff 算法
+       */
+
+      if (Array.isArray(n1.children)) {
+        n1.children.forEach((c) => unmount(c))
+        n2.children.forEach((c) => patch(null, c, container))
+      } else {
+        setElementText(container, "")
+
+        /**
+         * 递归更新 n2
+         */
+        n2.children.forEach((c) => patch(null, c, container))
+      }
+    } else {
+      /**
+       * 新节点不存在
+       */
+      if (Array.isArray(n1.children)) {
+        n1.children.forEach((c) => unmount(c))
+      } else if (typeof n1.children == "string") {
+        setElementText(container, "")
+      }
     }
   }
 
@@ -104,6 +200,14 @@ function createRenderer(opt: RenderOpt) {
   }
 
   function unmount(vnode: VnodeType) {
+    if (vnode.type == Fragment) {
+      /**
+       * 递归卸载 fragment
+       */
+      Array.isArray(vnode.children) && vnode.children.forEach((c) => unmount(c))
+      return
+    }
+
     const parent = vnode.el?.parentNode
     if (parent && vnode.el) parent.removeChild(vnode.el)
   }
@@ -205,50 +309,36 @@ const renderer = createRenderer({
       el.setAttribute(key, nextValue)
     }
   },
-})
 
-const vnode: { value: VnodeType } = ref({
-  type: "button",
-  props: {
-    class: "shit",
-
-    onclick: [
-      () => {
-        console.log("fuck")
-      },
-      () => {
-        console.log("duck")
-      },
-    ],
+  createText(text) {
+    return document.createTextNode(text)
   },
 
-  children: "abc",
+  setText(el, text) {
+    el.nodeValue = text
+  },
 })
 
-const bol = ref(false)
+const Text = Symbol()
+const Comment = Symbol()
 
-effect(() => {
-  const vn = {
-    type: "div",
-    props: bol.value
-      ? {
-          onclick: () => console.log("parent clicked"),
-        }
-      : {},
+const Fragment = Symbol()
 
-    children: [
-      {
-        type: "p",
-        props: {
-          onclick: () => {
-            console.log("p click")
-            bol.value = true
-          },
-        },
-        children: "test",
-      },
-    ],
-  }
+const vnode: { value: VnodeType } = ref({
+  type: "ul",
+  props: {
+    class: "shit",
+  },
 
-  renderer.render(vn, document.querySelector("#app"))
+  children: [
+    {
+      type: Fragment,
+      children: [
+        { type: "li", children: "123" },
+        { type: "li", children: "123" },
+      ],
+    },
+  ],
 })
+
+renderer.render(vnode.value, document.body)

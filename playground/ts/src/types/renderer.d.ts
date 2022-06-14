@@ -3,7 +3,7 @@ export interface VnodeType {
   props?: Record<string, any>
   children?: string | Array<VnodeType> | VnodeType
 
-  type?: string
+  type?: any
 
   /**
    * 用来描述一个 vnode 的标签属性
@@ -41,6 +41,10 @@ export interface RenderOpt {
   insert: (VnodeType, VnodeType, Element?) => void
 
   patchProps: (ContainerType, string, any, any) => void
+
+  createText: (string) => Text
+
+  setText: (VnodeType, string) => void
 }
 
 declare global {
