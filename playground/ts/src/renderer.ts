@@ -1,8 +1,10 @@
 // render 模型
 
-import { effect, ref } from "@vue/reactivity"
-import { VnodeType, RenderOpt, ContainerType } from "./types/renderer"
+import { effect, ref, shallowReactive, reactive } from "@vue/reactivity"
+import { VnodeType, RenderOpt, ContainerType, ComponentType } from "./types/renderer"
 import { isArr } from "./utils"
+import { cloneDeep } from "lodash"
+// import { mountComponent, patchComponent } from "./component"
 
 /**
  * render => patch => mountElement => insert
@@ -11,9 +13,7 @@ import { isArr } from "./utils"
 function createRenderer(opt: RenderOpt) {
   const { createElement, setElementText, insert, patchProps, createText, setText } = opt
 
-  function patch(n1: VnodeType | null | undefined, n2: VnodeType, container: ContainerType) {
-    console.log("patch", n1)
-
+  function patch(n1: VnodeType | null | undefined, n2: VnodeType, container: ContainerType, anchor?: any) {
     /**
      * 卸载逻辑
      */
@@ -33,7 +33,6 @@ function createRenderer(opt: RenderOpt) {
      * 如果是字符串，那就是普通 html 标签元素
      * 如果是对象，那就是描述一个组件元素
      */
-
     if (typeof type === "string") {
       if (!n1) {
         /**
@@ -69,7 +68,15 @@ function createRenderer(opt: RenderOpt) {
       } else {
         patchChildren(n1, n2, container)
       }
-    } else if (typeof type === "object") {
+    } else if (typeof type === "object" || typeof type === "function") {
+      /**
+       * 处理 组件 节点
+       */
+      if (!n1) {
+        mountComponent(n2, container, anchor)
+      } else {
+        patchComponent()
+      }
     } else {
       // 其它类型的 vnode
     }
@@ -127,8 +134,30 @@ function createRenderer(opt: RenderOpt) {
        */
 
       if (Array.isArray(n1.children)) {
-        n1.children.forEach((c) => unmount(c))
-        n2.children.forEach((c) => patch(null, c, container))
+        const oldChildren = n1.children
+        const newChildren = n2.children
+
+        const oldLen = oldChildren.length
+        const newLen = newChildren.length
+
+        /**
+         * 两组子节点的公共长度
+         */
+        const commonLength = Math.min(oldLen, newLen)
+
+        for (let i = 0; i < commonLength; i++) {
+          patch(oldChildren[i], newChildren[i], container)
+        }
+
+        if (newLen > oldLen) {
+          for (let i = commonLength; i < newLen; i++) {
+            patch(null, newChildren[i], container)
+          }
+        } else if (oldLen > newLen) {
+          for (let i = commonLength; i < oldLen; i++) {
+            unmount(oldChildren[i])
+          }
+        }
       } else {
         setElementText(container, "")
 
@@ -185,6 +214,7 @@ function createRenderer(opt: RenderOpt) {
       /**
        * 初始化，最开始 _vnode 是空的所以 patch 接收到的是 undefined
        */
+
       patch(container._vnode, vnode, container)
     } else {
       // 清空 vnode
@@ -196,7 +226,7 @@ function createRenderer(opt: RenderOpt) {
     /**
      * _vnode 旧的 vnode 要被卸载的 vnode
      */
-    container._vnode = vnode
+    container._vnode = cloneDeep(vnode)
   }
 
   function unmount(vnode: VnodeType) {
@@ -210,6 +240,128 @@ function createRenderer(opt: RenderOpt) {
 
     const parent = vnode.el?.parentNode
     if (parent && vnode.el) parent.removeChild(vnode.el)
+  }
+
+  function mountComponent(vnode: VnodeType, container: ContainerType, anchor: ContainerType) {
+    const componentOptions = vnode.type
+    const { render, data, beforeCreate, created, props: propsOption } = componentOptions as ComponentType
+
+    /**
+     * beforeCreate 生命周期钩子
+     */
+    beforeCreate && beforeCreate()
+
+    const [props, attrs] = resolveProps(propsOption, vnode.props as Record<string, any>)
+
+    /**
+     * 把 data 包装成响应式对象
+     */
+    const state = reactive(typeof data == "function" ? data() : data || {})
+
+    /**
+     * vnode 实例
+     */
+    const instance = {
+      /**
+       * 状态，就是 响应式的 data
+       */
+      state,
+
+      /**
+       * 组件是否被挂载
+       */
+      isMounted: false,
+
+      /**
+       * 组件的渲染内容
+       */
+      subTree: null,
+
+      /**
+       * 解析出来的 props
+       */
+
+      props: shallowReactive(props),
+    }
+
+    vnode.component = instance
+
+    /**
+     * 渲染上下文对象
+     *
+     * 组件的实例代理
+     */
+    const renderContext = new Proxy(instance, {
+      get(t, k, r) {
+        const { state, props } = t
+
+        /**
+         * 先从 data 里面取得数据
+         *
+         * 说白了 data 会覆盖 props
+         */
+        if (state && k in state) {
+          return state[k]
+        } else if (props && k in props) {
+          return props[k as string]
+        } else {
+          console.warn(`实例 ${instance} 读取 key: ${k as string} 不存在 `)
+          return undefined
+        }
+      },
+
+      set(t, k, v, r) {
+        const { state, props } = t
+
+        if (state && k in state) {
+          return Reflect.set(t, k, v, r)
+        } else if (props && k in props) {
+          console.warn(`Attempting to mutate props ${k as string}, props are readOnly`)
+          return false
+        } else {
+          console.warn(`实例 ${instance} 写入 key: ${k as string} 失败 `)
+          return false
+        }
+      },
+    })
+
+    /**
+     * 对，就是辣个 created 钩子
+     */
+    created && created.call(renderContext)
+
+    /**
+     * 更新视图
+     */
+    effect(() => {
+      const subTree = render.call(state, state)
+
+      patch(null, subTree, container, anchor)
+    })
+  }
+
+  function patchComponent() {}
+
+  /**
+   * 解析 props
+   * @param options vnode 里面定义的 props 对象
+   * @param propsData template 转换的全部 props / attrs
+   */
+  function resolveProps(options: Record<string, any>, propsData: Record<string, any>) {
+    type PropsKey = keyof typeof propsData
+
+    const props: Record<PropsKey, any> = {}
+    const attrs: Record<PropsKey, any> = {}
+
+    for (const key in propsData) {
+      if (key in options) {
+        props[key] = propsData[key]
+      } else {
+        attrs[key] = propsData[key]
+      }
+    }
+
+    return [props, attrs]
   }
 
   return {
@@ -238,6 +390,7 @@ const renderer = createRenderer({
   },
 
   setElementText(el: HTMLElement, text: string) {
+    console.log("!!setElementText")
     el.textContent = text
   },
 
@@ -245,6 +398,7 @@ const renderer = createRenderer({
    * 这里把 container 抽象为 parent
    */
   insert(el: ContainerType, parent: ContainerType, anchor?: HTMLElement | null) {
+    console.log("!!insert")
     if (!anchor) anchor = null
 
     if (parent.insertBefore) {
@@ -341,4 +495,38 @@ const vnode: { value: VnodeType } = ref({
   ],
 })
 
-renderer.render(vnode.value, document.body)
+// effect(() => {
+//   console.log("effect")
+//   renderer.render(vnode.value, document.body)
+// })
+
+// setTimeout(() => {
+//   vnode.value.children[0].children[0].children = "999"
+// }, 1000)
+
+const ZComponent = {
+  name: "ZComponent",
+
+  props: {
+    title: "Title",
+  },
+
+  data() {
+    return {
+      // title: "fuck",
+    }
+  },
+
+  render() {
+    return {
+      type: "div",
+      children: `title: ${(this as any).title}`,
+    }
+  },
+}
+
+const comp_vnode: { value: VnodeType } = ref({
+  type: ZComponent,
+})
+
+renderer.render(comp_vnode.value, document.body)

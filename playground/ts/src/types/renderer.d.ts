@@ -13,6 +13,38 @@ export interface VnodeType {
   el?: ContainerType
 
   onclick?: Function | Array<Function>
+
+  /**
+   * vnode 的组件实例
+   */
+  component?: {}
+}
+
+export interface ComponentType {
+  /**
+   * render 函数，必须是函数
+   */
+  render: Function
+
+  /**
+   * data，就是辣个 data
+   */
+  data: any
+
+  /**
+   * props，就是辣个 props
+   */
+  props: Record<string, any>
+
+  beforeCreate?: () => void
+
+  created?: () => void
+
+  beforeMounted?: () => void
+
+  mounted?: () => void
+
+  updated?: () => void
 }
 
 export interface ContainerType extends Element {
