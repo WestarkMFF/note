@@ -1,6 +1,6 @@
 // render 模型
 
-import { effect, ref, shallowReactive, reactive } from "@vue/reactivity"
+import { effect, ref, shallowReactive, reactive, shallowReadonly } from "@vue/reactivity"
 import { VnodeType, RenderOpt, ContainerType, ComponentType } from "./types/renderer"
 import { isArr } from "./utils"
 import { cloneDeep } from "lodash"
@@ -244,7 +244,7 @@ function createRenderer(opt: RenderOpt) {
 
   function mountComponent(vnode: VnodeType, container: ContainerType, anchor: ContainerType) {
     const componentOptions = vnode.type
-    const { render, data, beforeCreate, created, props: propsOption } = componentOptions as ComponentType
+    let { render, data, beforeCreate, created, props: propsOption, setup } = componentOptions as ComponentType
 
     /**
      * beforeCreate 生命周期钩子
@@ -256,7 +256,8 @@ function createRenderer(opt: RenderOpt) {
     /**
      * 把 data 包装成响应式对象
      */
-    const state = reactive(typeof data == "function" ? data() : data || {})
+    // const state = reactive(typeof data == "function" ? data() : data || {})
+    const state = data ? reactive(data()) : null
 
     /**
      * vnode 实例
@@ -284,6 +285,38 @@ function createRenderer(opt: RenderOpt) {
       props: shallowReactive(props),
     }
 
+    const setupContext = { attrs }
+
+    let setupResult = null
+
+    /**
+     * 调用 setup 函数，拿到他的 return
+     */
+
+    if (setup) {
+      setupResult = setup(shallowReadonly(instance.props), setupContext)
+    }
+
+    /**
+     * setup 的返回结果
+     */
+    let setupState: any = null
+
+    if (typeof setupResult === "function") {
+      /**
+       * 如果 setup 的返回结果是一个 function && option 里面已经有了 render 函数，那就是两个 render 冲突了
+       */
+
+      if (render) console.error(`setup 函数返回的是 render 函数，和 option > render 冲突了`)
+
+      /**
+       * 重写 render
+       */
+      render = setupResult
+    } else {
+      setupState = setupResult
+    }
+
     vnode.component = instance
 
     /**
@@ -304,6 +337,8 @@ function createRenderer(opt: RenderOpt) {
           return state[k]
         } else if (props && k in props) {
           return props[k as string]
+        } else if (setupState && k in setupState) {
+          return setupState[k]
         } else {
           console.warn(`实例 ${instance} 读取 key: ${k as string} 不存在 `)
           return undefined
@@ -318,6 +353,9 @@ function createRenderer(opt: RenderOpt) {
         } else if (props && k in props) {
           console.warn(`Attempting to mutate props ${k as string}, props are readOnly`)
           return false
+        } else if (setupState && k in setupState) {
+          setupState[k] = v
+          return true
         } else {
           console.warn(`实例 ${instance} 写入 key: ${k as string} 失败 `)
           return false
@@ -327,6 +365,8 @@ function createRenderer(opt: RenderOpt) {
 
     /**
      * 对，就是辣个 created 钩子
+     *
+     * 这个 call 可以让 created 里面的 this 拿到 context
      */
     created && created.call(renderContext)
 
@@ -528,5 +568,15 @@ const ZComponent = {
 const comp_vnode: { value: VnodeType } = ref({
   type: ZComponent,
 })
+
+const Comp = {
+  props: {
+    foo: String,
+  },
+
+  setup(props: Record<string, any>, setupContext: Record<string, any>) {
+    console.log(props.foo)
+  },
+}
 
 renderer.render(comp_vnode.value, document.body)

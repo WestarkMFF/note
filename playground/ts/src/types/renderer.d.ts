@@ -1,3 +1,5 @@
+import { readonly } from "vue"
+
 export interface VnodeType {
   tag?: string
   props?: Record<string, any>
@@ -45,6 +47,12 @@ export interface ComponentType {
   mounted?: () => void
 
   updated?: () => void
+
+  /**
+   * setup option
+   *
+   */
+  setup?: (readonly, any) => Record<any, any>
 }
 
 export interface ContainerType extends Element {
