@@ -4,6 +4,7 @@ import { effect, ref, shallowReactive, reactive, shallowReadonly } from "@vue/re
 import { VnodeType, RenderOpt, ContainerType, ComponentType } from "./types/renderer"
 import { isArr } from "./utils"
 import { cloneDeep } from "lodash"
+import { Container } from "element-ui"
 // import { mountComponent, patchComponent } from "./component"
 
 /**
@@ -251,13 +252,16 @@ function createRenderer(opt: RenderOpt) {
      */
     beforeCreate && beforeCreate()
 
-    const [props, attrs] = resolveProps(propsOption, vnode.props as Record<string, any>)
+		/**
+		 * 处理 props attrs 
+		 */
+    const [props, attrs] = resolveProps(propsOption || {}, vnode.props as Record<string, any>)
 
     /**
      * 把 data 包装成响应式对象
      */
     // const state = reactive(typeof data == "function" ? data() : data || {})
-    const state = data ? reactive(data()) : null
+    const state = data ? reactive(data()) : {}
 
     /**
      * vnode 实例
@@ -285,14 +289,36 @@ function createRenderer(opt: RenderOpt) {
       props: shallowReactive(props),
     }
 
-    const setupContext = { attrs }
+    /**
+     * 定义 emit 函数
+     *
+     * @param event string
+     * @param payload
+     */
+    function emit(event: string, ...payload: any[]) {
+      /**
+       * 处理事件名
+       *
+       * change => onChange
+       */
+
+      const eventName = `on${event[0].toUpperCase() + event.slice(1)}`
+
+      const handler = instance.props[eventName]
+      if (handler) {
+        handler(...payload)
+      } else {
+        console.error(`事件 ${eventName} 不存在`)
+      }
+    }
+
+    const setupContext = { attrs, emit }
 
     let setupResult = null
 
     /**
      * 调用 setup 函数，拿到他的 return
      */
-
     if (setup) {
       setupResult = setup(shallowReadonly(instance.props), setupContext)
     }
@@ -374,7 +400,7 @@ function createRenderer(opt: RenderOpt) {
      * 更新视图
      */
     effect(() => {
-      const subTree = render.call(state, state)
+      const subTree = render.call(renderContext, renderContext)
 
       patch(null, subTree, container, anchor)
     })
@@ -394,7 +420,7 @@ function createRenderer(opt: RenderOpt) {
     const attrs: Record<PropsKey, any> = {}
 
     for (const key in propsData) {
-      if (key in options) {
+      if (key in options || key.startsWith("on")) {
         props[key] = propsData[key]
       } else {
         attrs[key] = propsData[key]
@@ -565,18 +591,33 @@ const ZComponent = {
   },
 }
 
-const comp_vnode: { value: VnodeType } = ref({
-  type: ZComponent,
-})
-
-const Comp = {
+const Comp: ComponentType = {
   props: {
     foo: String,
   },
 
   setup(props: Record<string, any>, setupContext: Record<string, any>) {
-    console.log(props.foo)
+    // console.log(props.foo)
+
+    return {}
+  },
+
+  render(props) {
+    console.log(props)
+
+    return {
+      type: "div",
+      children: `title11 ${this.foo}`,
+    }
   },
 }
 
-renderer.render(comp_vnode.value, document.body)
+const comp_vnode: { value: VnodeType } = ref({
+  type: Comp,
+
+  props: {
+    foo: "yess",
+  },
+})
+
+renderer.render(comp_vnode.value, document.querySelector("#app") as ContainerType)

@@ -3,7 +3,7 @@ import { readonly } from "vue"
 export interface VnodeType {
   tag?: string
   props?: Record<string, any>
-  children?: string | Array<VnodeType> | VnodeType
+  children?: string | Array<VnodeType> | VnodeType | Record<string, VnodeType>
 
   type?: any
 
@@ -26,17 +26,17 @@ export interface ComponentType {
   /**
    * render 函数，必须是函数
    */
-  render: Function
+  render: (any, any) => any
 
   /**
    * data，就是辣个 data
    */
-  data: any
+  data?: any
 
   /**
    * props，就是辣个 props
    */
-  props: Record<string, any>
+  props?: Record<string, any>
 
   beforeCreate?: () => void
 
